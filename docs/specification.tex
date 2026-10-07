@@ -1,0 +1,710 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage[magyar]{babel}
+  \usepackage{lmodern}
+\else
+  \usepackage{fontspec}
+  \usepackage{babel}
+  \babelprovide[main,import]{hungarian}
+\fi
+\usepackage[a4paper,margin=23mm]{geometry}
+\usepackage{microtype}
+\usepackage{array,booktabs,longtable,tabularx}
+\usepackage{enumitem}
+\usepackage{amsmath,amssymb}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,shapes.geometric}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue!45!black,urlcolor=blue!45!black,
+  pdftitle={Hexagonális területfoglaló játék -- követelményspecifikáció},
+  pdfauthor={Szoftverarchitektúrák házi feladat csapata}}
+\setlist{nosep,leftmargin=*}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\setlength{\emergencystretch}{2em}
+\clubpenalty=10000
+\widowpenalty=10000
+\brokenpenalty=10000
+\renewcommand{\arraystretch}{1.18}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\azon}[1]{\textbf{#1}}
+\newcommand{\adat}[2]{\par\textbf{#1:} #2\par}
+% A csapat adatai egy helyen tölthetők ki.
+\newcommand{\csapatnev}{Kitöltendő}
+\newcommand{\konzulens}{Kitöltendő}
+\newcommand{\tagA}{Kitöltendő}
+\newcommand{\tagB}{Kitöltendő}
+\newcommand{\tagC}{Kitöltendő}
+\newcommand{\tagD}{Kitöltendő}
+\newcommand{\neptunA}{Kitöltendő}
+\newcommand{\neptunB}{Kitöltendő}
+\newcommand{\neptunC}{Kitöltendő}
+\newcommand{\neptunD}{Kitöltendő}
+
+\begin{document}
+\begin{center}
+  {\Large\bfseries Hexagonális területfoglaló játék\par}
+  \vspace{4mm}
+  {\large Követelményspecifikáció\par}
+  Budapesti Műszaki és Gazdaságtudományi Egyetem\\
+  Szoftverarchitektúrák -- MSc házi feladat
+\end{center}
+\adat{Verzió}{0.1 -- konzulensi egyeztetésre készített változat}
+\adat{Dátum}{2026. október 7.}
+\adat{Csapat}{\csapatnev}
+\adat{Konzulens}{\konzulens}
+
+\begin{tabularx}{\linewidth}{@{}lYY@{}}
+\toprule
+Jelölés & Név & Neptun-kód \\
+\midrule
+A & \tagA & \neptunA \\
+B & \tagB & \neptunB \\
+C & \tagC & \neptunC \\
+D & \tagD & \neptunD \\
+\bottomrule
+\end{tabularx}
+
+\section{Bevezetés és célkitűzés}
+Az alkalmazás egy körökre osztott stratégiai játék. A játékosok egy színes,
+hexagonális rácson a saját területük színének megváltoztatásával foglalnak el
+szomszédos mezőket. A cél a legnagyobb terület megszerzése. Egy számítógépen
+több ember játszhat felváltva, illetve emberi és gépi játékosok is részt vehetnek
+ugyanabban a játszmában.
+
+A követelményspecifikáció a rendszer kívülről megfigyelhető működését, a
+játékszabályok pontos értelmezését, az elfogadás feltételeit és a fő műszaki
+döntéseket rögzíti. Elsődleges alapja a repóban található \texttt{task.md}.
+A tantárgyi adatlap és a 2026-os hallgatói útmutató alapján hangsúlyt kap a
+rétegek felelősségének elválasztása, a megindokolt mintahasználat, a minőség és
+a dokumentálhatóság~\cite{adatlap,utmutato,tantargy}. A részletes rendszerterv és a
+telepítési dokumentáció a megvalósítás során külön készül el, a közzétett
+dokumentációminta felépítését is figyelembe véve~\cite{minta}.
+
+A konzulenssel egyeztetendő a vállalt terjedelem és a kiírásban nyitva hagyott
+játékszabályok alábbi pontosítása~\cite{utmutato}.
+
+\section{Terjedelem, szereplők és fogalmak}
+\subsection{Vállalt funkciók és határok}
+Az alapváltozat tartalmazza az új játszma beállítását, a véletlen pályát,
+a 2--4 játékos körökre osztott játékát, a helyi többjátékos módot, a két gépi
+nehézséget, az állás kijelzését, az eredményhirdetést és a rövid szabályleírást.
+A felület magyar nyelvű. A pálya mérete rögzített, 12~$\times$~10 mező.
+
+A vállalás nem tartalmaz hálózati többjátékos módot, felhasználói fiókot,
+ranglistát, mentést és visszatöltést, lépés-visszavonást, pályaszerkesztőt,
+mobilra optimalizált felületet vagy keresésen alapuló MI-t. A játékállapot
+csak az adott böngészőlapon, memóriában él; az oldal újratöltése megszakítja
+a játszmát. Ezek közül később külön követelményekkel bővíthető a rendszer,
+de elkészítésük nem feltétele az alapváltozat elfogadásának.
+
+\subsection{Aktorok és érdekeltek}
+
+\begin{tabularx}{\linewidth}{@{}lY@{}}
+\toprule
+Szereplő & Feladat, kapcsolat a rendszerrel \\
+\midrule
+Emberi játékos & Játszmát állít be, a saját körében színt választ, követi az
+állást, elolvassa a szabályokat, és kezdeményezheti a játszma megszakítását. \\
+Játszma kezdeményezője & Az emberi játékos szerepköre, aki megadja a
+résztvevőket. Nincs külön jogosultsága vagy fiókja. \\
+Gépi játékos & A rendszer belső szereplője: szabályos színt választ a
+beállított stratégia szerint. Nem külső UML-aktor. \\
+Konzulens & Érdekelt: egyezteti a specifikációt, és ellenőrzi a kész
+alkalmazást. Nincs külön alkalmazásbeli kezelőfelülete. \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Fogalomtár}
+
+\begin{tabularx}{\linewidth}{@{}lY@{}}
+\toprule
+Fogalom & Jelentés \\
+\midrule
+Mező & A pálya egy hatszög alakú eleme, egy színnel és legfeljebb egy
+tulajdonossal. \\
+Szomszéd & Olyan mező, amellyel közös él van; a csúcsérintés nem számít. \\
+Semleges mező & Tulajdonos nélküli, még elfoglalható mező. \\
+Kezdőmező & Az adott játékos rögzített kiindulópontja, amely végig az övé. \\
+Terület & Egy játékos összes birtokolt mezője; összefüggő és egyszínű. \\
+Lépés & Az aktuális játékos egy szabályos színválasztása és annak
+teljes, láncszerű végrehajtása. \\
+Forduló & A játékosok egy teljes sorozata a rögzített sorrendben. \\
+Pontszám & A birtokolt mezők száma, a kezdőmezőt is beleértve. \\
+\bottomrule
+\end{tabularx}
+
+\section{A játék szabályai}
+\label{sec:szabalyok}
+A kiírás nem számszerűsíti a játékosszámot, a palettát vagy a pályát, és nem
+rögzíti külön a döntetlent és az induló területek méretét. Az alábbiak az
+alapváltozat \textbf{tervezett pontosításai}; konzulensi egyeztetés után ezek
+képezik a megvalósítás és az ellenőrzés alapját.
+
+\subsection{Pálya és kezdőállapot}
+\begin{enumerate}[label=\textbf{SZ\arabic*.}]
+\item A pálya 120 mezőből álló, összefüggő, 12~$\times$~10-es hexagonális
+rács, szemközti szélek összekötése nélkül. A széleken és a sarkokon hatnál
+kevesebb szomszéd van.
+\item A paletta hat színből áll: piros, zöld, kék, sárga, lila és türkiz.
+A színek rögzített azonosítója rendre 1--6. A mezők kezdeti színe
+egyenletes véletlen választással készül, a kezdőmezők kivételével.
+\item Egy játszmában 2--4 játékos van, legalább egy emberi résztvevővel.
+Az alapbeállítás egy ember és egy normál gépi ellenfél. A játékosok
+sorrendje a beállítási listában elfoglalt helyük; a kezdő játékos az első.
+\item A kezdőmezők axiális koordinátái sorrendben:
+$(0,0)$, $(11,9)$, $(11,0)$, $(0,9)$. Két játékosnál az első kettő,
+háromnál az első három, négynél mind a négy szerepel.
+\item A kezdőszínek különbözők: a hat szín véletlen permutációjának első
+2--4 eleme kerül a kezdőmezőkre. Az induláskor minden játékos megszerzi
+a kezdőmezőjével azonos színű, semleges mezőkből élmentén elérhető teljes
+komponenst. A különböző kezdőszínek miatt ezek nem fedik egymást.
+\end{enumerate}
+Az induló területek eltérő méretűek lehetnek. A játék véletlen pályája és
+rögzített sorrendje nem vállal versenyszerű kiegyensúlyozottságot.
+
+\subsection{Színválasztás és terjedés}
+\begin{enumerate}[resume,label=\textbf{SZ\arabic*.}]
+\item Az aktuális játékos olyan palettaszínt választhat, amely különbözik
+a saját jelenlegi színétől és minden más játékos jelenlegi színétől.
+A hat szín és legfeljebb négy különböző játékosszín miatt mindig van
+legalább két szabályos választás. A tiltás minden körben újraszámítandó.
+\item A választáskor a játékos teljes korábbi területe az új színt kapja.
+Ezután hozzáolvad minden olyan semleges mező, amely az új színű semleges
+mezők láncán keresztül elérhető a terület bármely mezőjéből. A terjedés
+addig folytatódik, amíg nincs újonnan hozzáadható mező.
+\item Ellenfélhez tartozó mező nem foglalható el, nem színezhető át,
+és nem használható a terjedés átjárójaként. A tulajdonos külön adat;
+az önmagában azonos szín nem jelent tulajdonjogot.
+\item Érvényes az a színváltás is, amely nulla új mezőt foglal el. Ez
+megváltoztathatja a későbbi választási lehetőségeket. A játék nem ér véget
+egyetlen növekedés nélküli lépés vagy forduló miatt.
+\item Egy lépés oszthatatlan állapotváltozás. A terjedés és a pontszámok
+frissítése után következik a sorrend szerinti következő játékos. Érvénytelen
+választás nem módosítja a pályát, a pontszámokat vagy a soron következő játékost.
+\end{enumerate}
+
+\subsection{Befejezés és eredmény}
+\begin{enumerate}[resume,label=\textbf{SZ\arabic*.}]
+\item A játék a kezdőállapot elkészültekor és minden érvényes lépés után
+ellenőrzi, maradt-e semleges mező. Ha nem maradt, a játszma befejeződik;
+további emberi vagy gépi lépés nem hajtható végre.
+\item A legnagyobb pontszámot elérő játékos nyer. Ha több játékos osztozik
+a legnagyobb pontszámon, az eredmény döntetlen közöttük. A végső lista
+pontszám szerint csökkenő, azonos pontszámnál a kezdeti sorrendet követi.
+\item A kézzel megszakított játszmának nincs győztese, és az nem kerül
+befejezett eredményként megjelenítésre.
+\end{enumerate}
+Az összefüggő, akadálymentes pályán minden semleges mező valamely játékos
+területéből semleges mezőkön át elérhető. A kiírás ,,amíg van elfoglalható
+terület'' feltételét ezért a semleges mezők elfogyásaként értelmezzük.
+Az ellenfélszín miatti átmeneti tiltás nem végleges elérhetetlenség.
+Tetszőleges, területnövekedést kerülő emberi lépéssorozat esetén nem
+garantált véges játékhossz; nincs lépésszámkorlát vagy automatikus időtúllépés.
+
+\subsection{Gépi játékos}
+A gép ugyanazokat a szabályos színeket választhatja, mint az ember.
+Minden lehetséges színhez a teljes láncszerű foglalás eredményét számítja ki,
+az élő játékállapot módosítása nélkül.
+
+\textbf{Normál nehézség:} a legtöbb új mezőt adó színt választja (mohó
+stratégia). Holtversenyben a legkisebb színazonosító dönt. Ha minden
+szabályos választás nulla növekedést ad, ugyanez a holtversenyszabály érvényes.
+
+\textbf{Könnyű nehézség:} ha létezik a legjobbnál kisebb nyereségű
+szabályos szín, 30\% valószínűséggel egyenletesen választ ezek közül,
+70\% valószínűséggel a normál stratégiát követi. Ha minden szabályos
+szín ugyanannyi mezőt ad, a normál stratégia érvényes. A ,,hibázás'' tehát
+gyengébb döntést jelent, tiltott lépést sohasem.
+
+\section{Funkcionális követelmények}
+Az F01--F08 követelmények mind az alapváltozat részei. A zárójelben
+megadott UC-azonosító a részletes használati esetre hivatkozik.
+\begin{longtable}{@{}P{19mm}P{\dimexpr\linewidth-19mm-2\tabcolsep\relax}@{}}
+\toprule
+Azonosító & Elvárt működés \\
+\midrule
+\endhead
+\azon{F01} & Új játszma előtt 2--4 résztvevő állítható be. Mindegyikhez
+emberi vagy gépi típus, géphez könnyű vagy normál nehézség adható meg.
+A név 1--20 karakter hosszú, szélső szóközök nélkül; az üres és a
+kis-/nagybetűtől függetlenül azonos nevek elutasítandók. Kezdetben
+,,Játékos 1'', ,,Játékos 2'' stb. nevek szerepelnek. Legalább egy emberi
+játékos szükséges. (UC01) \\
+\azon{F02} & Indításkor a rendszer a SZ1--SZ5 szerinti pályát és induló
+területeket készíti el, megjeleníti a kezdő játékost, és gépi kezdő esetén
+elindítja annak körét. (UC01) \\
+\azon{F03} & Emberi körben a hat szín közül a szabályosak választhatók.
+A rendszer a SZ6--SZ10 szerint végrehajtja a lépést, frissíti az állást
+és átadja a kört. (UC02) \\
+\azon{F04} & Gépi körben a beállított stratégia önállóan választ és
+végrehajt egy szabályos lépést. Több egymást követő gép külön körként
+látható; emberi színválasztás ilyenkor le van tiltva. (UC03) \\
+\azon{F05} & A játékfelület mutatja a pályát, a mezők tulajdonosát,
+a játékosok nevét, típusát, jelenlegi színét, pontszámát, az aktuális
+játékost és a semleges mezők számát. A tiltott színeknél látható a
+tiltás oka: saját szín vagy az azt használó ellenfél neve. (UC02, UC03) \\
+\azon{F06} & A játék lezárásakor megjelenik a teljes eredménylista és
+a győztes, illetve a döntetlenben érintett játékosok. A rendszer nem
+enged további lépést. Új játszma kezdeményezhető. (UC04) \\
+\azon{F07} & Futó játszmából az ,,Új játék'' művelet megerősítés után
+visszavisz a beállításokhoz. Elutasított megerősítésnél ugyanaz a játszma
+folytatódik. Megszakításkor a függőben lévő gépi műveletek törlődnek.
+Befejezett játszmánál nem szükséges megerősítés. (UC05) \\
+\azon{F08} & A ,,Szabályok'' nézet a beállításokból és játék közben
+is elérhető. Röviden ismerteti a színválasztást, a láncszerű foglalást,
+a pontozást és a gépi nehézségeket. Bezárása nem változtatja meg a
+játszmát. (UC06) \\
+\bottomrule
+\end{longtable}
+
+\section{Használati esetek és forgatókönyvek}
+\subsection{Használati esetek áttekintése}
+\begin{center}
+\begin{tikzpicture}[font=\small,
+  eset/.style={ellipse,draw,align=center,minimum width=50mm,minimum height=9mm},
+  kapcsolat/.style={draw}]
+\node[eset] (uj) at (4,0) {UC01: Játszma beállítása};
+\node[eset] (lepes) at (4,-1.2) {UC02: Színválasztás};
+\node[eset] (eredmeny) at (4,-2.4) {UC04: Eredmény megtekintése};
+\node[eset] (kilep) at (4,-3.6) {UC05: Új játszma kezdeményezése};
+\node[eset] (sugo) at (4,-4.8) {UC06: Szabályok megtekintése};
+\node[draw,fit=(uj)(lepes)(eredmeny)(kilep)(sugo),inner sep=5mm,
+  label=above:{Területfoglaló alkalmazás}] {};
+\draw (-2.2,-1) circle (0.14);
+\draw (-2.2,-1.14)--(-2.2,-1.8);
+\draw (-2.55,-1.4)--(-1.85,-1.4);
+\draw (-2.2,-1.8)--(-2.5,-2.2);
+\draw (-2.2,-1.8)--(-1.9,-2.2);
+\node[align=center] at (-2.2,-2.6) {Emberi\\játékos};
+\foreach \cel in {uj,lepes,eredmeny,kilep,sugo}
+  \draw[kapcsolat] (-1.8,-1.6)--(\cel.west);
+\end{tikzpicture}
+\end{center}
+Az UC03 belső, automatikus folyamat. Ezért nem szerepel külső aktorhoz
+kapcsolt használati esetként az ábrán, de külön forgatókönyv részletezi.
+
+\subsection{UC01 -- Játszma beállítása és indítása}
+\adat{Aktor, cél}{Emberi játékos; új, érvényes játszma létrehozása.}
+\adat{Előfeltétel}{A beállítási nézet nyitva van, nincs futó játszma.}
+\adat{Kiváltó esemény}{A játékos megnyomja az ,,Indítás'' gombot.}
+\textbf{Alapforgatókönyv:}
+\begin{enumerate}
+\item A játékos beállítja a résztvevők számát, nevét és típusát,
+a gépi résztvevők nehézségét.
+\item A rendszer ellenőrzi az F01 feltételeit.
+\item A rendszer létrehozza a pályát és az induló területeket.
+\item Megjelenik a játékfelület és a kezdő állás. Ha a kezdő játékos
+ember, a rendszer színválasztásra vár; ha gép, az UC03 indul.
+\end{enumerate}
+\textbf{Eltérések:} Hibás beállításnál a rendszer a megfelelő mezőnél
+magyar hibaüzenetet mutat, és megőrzi a megadott értékeket. Játszma nem
+indul. Ha a kezdő foglalások már lefedik a pályát, az UC04 következik.
+\adat{Utófeltétel}{Egy konzisztens játszma létrejött, vagy a felhasználó
+javíthatja a hibás beállítást.}
+
+\subsection{UC02 -- Emberi színválasztás}
+\adat{Aktor, cél}{Az aktuális emberi játékos; területének átszínezése
+és lehetőség szerint növelése.}
+\adat{Előfeltétel}{A játszma fut, emberi kör van, másik lépés nincs
+feldolgozás alatt.}
+\adat{Kiváltó esemény}{A játékos egy szabályos színgombot aktivál.}
+\textbf{Alapforgatókönyv:}
+\begin{enumerate}
+\item A rendszer ellenőrzi az aktuális játékost és a szín szabályosságát.
+\item Átszínezi a korábbi területet, majd elfoglalja a hozzá kapcsolódó,
+új színű semleges komponenseket.
+\item Frissíti a pontszámokat és a semleges mezők számát.
+\item Ha nincs semleges mező, az UC04 következik. Egyébként a következő
+játékos kapja a kört; gépi játékosnál az UC03 indul.
+\end{enumerate}
+\textbf{Eltérések:} Tiltott vagy már elavult választás esetén nincs
+állapotváltozás. Nulla növekedés esetén a lépés szabályos, a kör továbbadódik.
+Gyors ismételt aktiválás ugyanahhoz a körhöz legfeljebb egy lépést eredményez.
+\adat{Utófeltétel}{A teljes lépés végrehajtódott és a következő kör vagy
+az eredmény látható; elutasításkor a korábbi állapot maradt meg.}
+
+\subsection{UC03 -- Gépi kör automatikus végrehajtása}
+\adat{Résztvevő, cél}{Belső gépi stratégia; önálló szabályos lépés.}
+\adat{Előfeltétel}{A játszma fut, és gépi játékos következik.}
+\adat{Kiváltó esemény}{A vezérlés a gépi játékosnak adja át a kört.}
+\textbf{Alapforgatókönyv:}
+\begin{enumerate}
+\item A rendszer kijelzi az aktuális gép nevét és nehézségét,
+és letiltja az emberi színválasztást.
+\item A stratégia minden szabályos színre kiszámítja a foglalható
+mezők számát, és a nehézség szabálya szerint választ.
+\item A rendszer a közös szabálykezelővel végrehajtja a kiválasztott lépést.
+\item Az állás frissül; a következő játékos vagy az UC04 következik.
+Egymást követő gépek körei között legalább 250 ms megjelenítési szünet van.
+\end{enumerate}
+\textbf{Eltérések:} Nulla nyereségű helyzetben is történik szabályos
+színváltás. Új játék kezdeményezésekor a gépi kör felfüggesztődik;
+megerősített megszakítás után annak eredménye már nem alkalmazható.
+Váratlan belső hibánál nincs részleges lépés: hibaüzenet jelenik meg,
+és új játszma indítható.
+\adat{Utófeltétel}{Pontosan egy gépi lépés végrehajtódott, vagy a
+megszakított játszma további módosítása elmaradt.}
+
+\subsection{UC04 -- Játszma lezárása és eredmény megtekintése}
+\adat{Aktor, cél}{Emberi játékos; az eredmény és a végső állás megismerése.}
+\adat{Előfeltétel}{A kezdeti foglalások vagy egy teljes lépés után nincs
+semleges mező.}
+\adat{Kiváltó esemény}{A rendszer felismeri a befejezési feltételt.}
+\textbf{Alapforgatókönyv:}
+\begin{enumerate}
+\item A rendszer befejezettre állítja a játszmát, és letiltja a lépéseket.
+\item Megjeleníti a győztes nevét és az összes résztvevő végső pontszámát.
+\item A játékos megtekinti az eredményt és a végső pályát; választhatja
+az új játszma kezdeményezését.
+\end{enumerate}
+\textbf{Eltérés:} Azonos legnagyobb pontszámnál a rendszer döntetlent
+hirdet, és megnevezi valamennyi érintett résztvevőt.
+\adat{Utófeltétel}{A végső állapot megtekinthető, további lépés nincs.}
+
+\subsection{UC05 -- Új játszma kezdeményezése}
+\adat{Aktor, cél}{Emberi játékos; visszatérés a beállításokhoz.}
+\adat{Előfeltétel}{A játék- vagy eredménynézet nyitva van.}
+\adat{Kiváltó esemény}{Az ,,Új játék'' gomb aktiválása.}
+\textbf{Alapforgatókönyv:}
+\begin{enumerate}
+\item Futó játszmánál a rendszer felfüggeszti a gépi műveletet, és
+rákérdez a megszakításra.
+\item Megerősítéskor törli az aktuális játszmát és minden függőben lévő
+műveletét; megnyitja a beállításokat a legutóbb használt résztvevőkkel.
+\item Új indításkor új véletlen pálya jön létre az UC01 szerint.
+\end{enumerate}
+\textbf{Eltérések:} Elutasításkor a korábbi játszma azonos állapotból
+folytatódik, a felfüggesztett gépi kör újraindul. Befejezett játszmából
+közvetlenül megnyílnak a beállítások.
+\adat{Utófeltétel}{A beállítási nézet látható, vagy a korábbi játszma
+változatlan állapotból folytatódik.}
+
+\subsection{UC06 -- Szabályok megtekintése}
+\adat{Aktor, cél}{Emberi játékos; a játékmenet megismerése.}
+\adat{Előfeltétel}{A beállítási vagy játékfelület elérhető.}
+\adat{Kiváltó esemény}{A ,,Szabályok'' gomb aktiválása.}
+\textbf{Alapforgatókönyv:} Megnyílik a szabályleírás; a játékos elolvassa,
+majd bezárja. Játék közben a nézet nyitásakor a gépi kör felfüggesztődik,
+bezáráskor ugyanabból az állapotból folytatódik.
+\adat{Utófeltétel}{A korábbi nézet és változatlan játékállapot látható.}
+
+\section{Minőségi követelmények és felületi terv}
+\label{sec:minoseg}
+\begin{longtable}{@{}P{19mm}P{\dimexpr\linewidth-19mm-2\tabcolsep\relax}@{}}
+\toprule
+Azonosító & Követelmény és ellenőrzés \\
+\midrule
+\endhead
+\azon{M01} & \textbf{Helyesség.} Egy mezőnek legfeljebb egy tulajdonosa van;
+minden játékos területe összefüggő, tartalmazza a kezdőmezőjét, és egyszínű.
+A játékosszín egyedi, a pontszám a tulajdonolt mezők száma. A pontszámok
+és a semleges mezők számának összege mindig 120. Automatizált szabálytesztek
+ellenőrzik ezeket kezdéskor és érvényes lépések után. \\
+\azon{M02} & \textbf{Használhatóság.} Magyar feliratok, látható aktuális
+játékos, pontszámok és tiltási okok. A tulajdonost a mezőkön játékosszám
+is jelöli; a semleges mezők jelöletlenek. A színgombokon a szín neve
+szövegként is megjelenik. A gombok és beviteli mezők billentyűzettel
+elérhetők és látható fókuszt kapnak. Kézi ellenőrzés színtől független
+tulajdonos-azonosítással és egér nélküli játékkal. \\
+\azon{M03} & \textbf{Válaszidő.} Betöltött alkalmazásban egy emberi lépés
+és az állás megjelenítése legfeljebb 500 ms; egy gépi döntés a kijelzésig
+legfeljebb 1 s, a szándékos 250 ms szünetet is beleértve. A 120 mezős
+pályán 30 különböző lépés közül mindegyik teljesítse ezt. Referenciagép:
+a bemutató laptop, legalább 4 logikai processzorral és 8 GB RAM-mal,
+aktuális Chrome vagy Edge böngészővel, Release buildben; a tényleges
+konfiguráció a tesztjegyzőkönyvbe kerül. \\
+\azon{M04} & \textbf{Megbízhatóság.} Érvénytelen vagy ismételt körhöz
+tartozó kérés nem hoz létre részleges vagy kétszeres lépést. Nézetváltás
+után elavult gépi eredmény nem módosíthat új játszmát. Szabályteszt és
+kézi, gyors kattintásos/megszakításos ellenőrzés szükséges. \\
+\azon{M05} & \textbf{Karbantarthatóság.} A megjelenítés, az alkalmazásvezérlés
+és a játékszabályok külön rétegben készülnek. A szabályok böngésző nélkül
+tesztelhetők. Az új gépi stratégia a szabálykezelő és a pályarajzolás
+módosítása nélkül beilleszthető. Projektfüggőségek és kódáttekintés
+ellenőrzik a réteghatárokat. \\
+\azon{M06} & \textbf{Futtathatóság.} A funkciókat a beadáskor aktuális stabil
+Chrome és Edge asztali böngészőben, legalább 1280~$\times$~720-as
+ablakméret mellett ellenőrizzük. Az alkalmazás betöltése után a lépések
+nem igényelnek hálózati kérést. Offline újratöltés nem vállalt funkció. \\
+\azon{M07} & \textbf{Bemenetkezelés és biztonság.} A nevek szövegként,
+HTML-értelmezés nélkül jelennek meg. Az alkalmazásréteg ellenőrzi a
+beállításokat; a szabályréteg a lépéseket. Nyilvános webes kiszolgálás
+esetén HTTPS szükséges. Nincs személyesadat-gyűjtés, bejelentkezés,
+adatbázis vagy hálózati játékállapot; a helyi játékosok megbízhatók.
+A kliensoldali módosítások elleni versenybiztonság nem követelmény.
+Ellenőrzés: hibás mezők, HTML-szerű név és tiltott szín tesztje. \\
+\bottomrule
+\end{longtable}
+
+A felület három fő nézetből áll: \textbf{beállítások}, \textbf{játszma}
+és \textbf{eredmény}. A szabályleírás ezek fölött nyitható meg. A játszma
+nézetben a pálya a fő területet foglalja el, mellette vagy alatta látható
+a játékoslista, az aktuális kör és a színválasztó. A befejezés ugyanitt
+mutatja az eredménylistát, a végső pálya megőrzésével. A színválasztás
+gombbal történik; a pályamezők nem beviteli vezérlők.
+
+\section{Műszaki döntések és tervezett architektúra}
+\label{sec:technika}
+\subsection{Platform és futtatás}
+\textbf{D01 -- C\# és önálló Blazor WebAssembly.} A kiírás által
+engedélyezett Blazor platformot választjuk. A játék a böngészőben fut,
+az alkalmazás letöltése után minden játéklogika helyben hajtódik végre.
+A build statikus fájlokként szolgálható ki; nincs játékot vezérlő szerver
+vagy állandó szerverkapcsolat~\cite{blazor}. Ez illeszkedik a helyi,
+felváltva játszott módhoz, és csökkenti a telepítési és üzemeltetési munkát.
+A .NET MAUI és a WinUI szintén lehetséges lenne, de ehhez a feladathoz
+nem szükséges natív telepítő és platformspecifikus felület.
+
+\textbf{D02 -- .NET 10 LTS.} A célkeretrendszer .NET 10; az induláskor
+kiválasztott támogatott SDK-verziót a repóban rögzítjük. A verzió hosszú
+távú támogatású~\cite{dotnet}. A konkrét csomagverziók a projektfájlokba
+kerülnek, előzetes kiadású függőségre nincs szükség.
+
+\textbf{D03 -- SVG-pálya.} A hatszögek Razor-komponensből előállított
+SVG-elemek. A 120 mezőhöz elegendő ez a megoldás; a tulajdonos száma
+és a szín közvetlenül rajzolható. Külön játékmotor és képi assetek
+nem szükségesek. A megjelenítési koordináták nem részei a szabálylogikának.
+
+\subsection{Három logikai réteg}
+\textbf{D04 -- Rétegezett, egy folyamatban futó alkalmazás.} Három
+külön projekt adja a rétegeket. A projektnevek munkanevek.
+
+\begin{tabularx}{\linewidth}{@{}lY@{}}
+\toprule
+Réteg / projekt & Felelősség \\
+\midrule
+Megjelenítés / \texttt{Game.Web} & Razor-nézetek, SVG, magyar feliratok,
+űrlapok, színgombok, fókusz és eredménykijelzés. Műveleteket kér az
+alkalmazásrétegtől, és csak olvasható állapotot jelenít meg. \\
+Alkalmazás / \texttt{Game.Application} & Játszma életciklusa, beállítások
+ellenőrzése, emberi és gépi körök vezérlése, stratégiaválasztás,
+megszakítás, megjelenítéshez átadott állapot. \\
+Szabályok / \texttt{Game.Domain} & Hexrács, mezők, tulajdonosok,
+szabályos színek, területfoglalás, körváltás és eredményszámítás.
+A réteg nem hivatkozik Blazorra, böngészőre vagy alkalmazásvezérlésre. \\
+\bottomrule
+\end{tabularx}
+
+\begin{center}
+\begin{tikzpicture}[font=\small,
+  reteg/.style={draw,rounded corners,align=center,minimum width=100mm,
+    minimum height=12mm},
+  nyil/.style={-{Latex},thick}]
+\node[reteg] (ui) {Megjelenítés -- Game.Web\\Razor, SVG, beállítások, állás};
+\node[reteg,below=9mm of ui] (app) {Alkalmazás -- Game.Application\\
+játszmavezérlés, gépi stratégiák, életciklus};
+\node[reteg,below=9mm of app] (domain) {Szabályok -- Game.Domain\\
+modell, hexszomszédság, foglalás, eredmény};
+\draw[nyil] (ui)--(app);
+\draw[nyil] (app)--(domain);
+\end{tikzpicture}
+\end{center}
+Az ábra a működésbeli hívási irányt mutatja. A megjelenítési projekt
+a közös modelltípusok miatt hivatkozhat a szabályprojektre, de lépést
+kizárólag az alkalmazásrétegen keresztül kezdeményezhet.
+A rétegek közti függőség nem körkörös. Az MI a szabálykezelő által
+számított nyereséget használja, külön foglalási algoritmust nem tartalmaz.
+
+Nincs adatbázisréteg: nincs tartósan tárolandó felhasználó vagy játszma.
+A három réteg a megjelenítés, az esetkezelés és a szakterületi szabályok
+önálló felelősségét valósítja meg; külön hálózati szolgáltatásra bontásuk
+ehhez az alkalmazáshoz nem indokolt.
+
+\subsection{Adatmodell és alapalgoritmus}
+A modell fő elemei:
+\begin{itemize}
+\item \textbf{GameSettings}: résztvevők neve, típusa, gépi nehézsége,
+sorrendje; a belső teszteléshez megadható véletlenmag.
+\item \textbf{Board / Cell}: koordináta, színazonosító, opcionális
+tulajdonosazonosító. A pálya mérete a jelen verzióban állandó.
+\item \textbf{Player}: állandó azonosító, név, típus, kezdőmező és
+aktuális szín. A pontszám a tulajdonolt mezőkből származtatható.
+\item \textbf{GameState}: pálya, játékosok, aktuális játékos,
+állapotverzió és futó/befejezett státusz; befejezéskor az eredmény.
+\end{itemize}
+A megszakítás után az alkalmazás eldobja a játszmaállapotot. A felület
+nem módosíthatja közvetlenül a modell belső gyűjteményeit.
+
+A rács axiális $(q,r)$ koordinátákat használ, ahol $0\leq q<12$ és
+$0\leq r<10$. A hat lehetséges szomszéd irányvektora:
+\[
+ (1,0),\;(-1,0),\;(0,1),\;(0,-1),\;(1,-1),\;(-1,1).
+\]
+Csak a tartományon belüli koordináták számítanak mezőnek.
+A rajzolásnak ezt a szomszédságot kell megjelenítenie.
+
+A foglalás iteratív szélességi vagy mélységi bejárással készül:
+\begin{enumerate}
+\item A korábbi terület minden mezője megkapja a kiválasztott színt,
+és bekerül a bejárás induló halmazába.
+\item A bejárás a vizsgált mező szomszédai közül hozzáadja a semleges,
+kiválasztott színű, még nem feldolgozott mezőket.
+\item Az újonnan elfoglalt mezők szomszédait is megvizsgálja;
+a folyamat a feldolgozási sor kiürülésével ér véget.
+\end{enumerate}
+A bejárás legfeljebb a pálya mezőinek és szomszédkapcsolatainak számával
+arányos munka: $O(V+E)$; a hexrácson $E=O(V)$. Az MI legfeljebb hat
+színre végez próbafoglalást, ezért a vállalt pályaméreten egyszerű
+állapotmásolatokkal is kezelhető. A próbafoglalás és a végleges lépés
+ugyanazt a szabályt alkalmazza.
+
+\subsection{Minták, véletlen és aszinkron vezérlés}
+\textbf{D05 -- Strategy.} A könnyű és normál gépi játékos közös
+stratégiainterfészt valósít meg az alkalmazásrétegben. Ez a két viselkedés
+cseréjét és tesztelését segíti. A stratégia csak állapotot olvas és
+színt javasol; az érvényesítést a közös szabálykezelő végzi.
+
+\textbf{D06 -- Facade.} A felület egy játszmavezérlőn keresztül indít,
+léptet, függeszt fel és szakít meg játszmát. Ez fogja össze a szabályokat
+és a gépi körök ütemezését, és egy helyen őrzi az aktuális állapotot.
+A két minta konkrét feladatot szolgál; további minták alkalmazása nem cél.
+
+A véletlenszám-forrás cserélhető a tesztekhez. Rögzített maggal a
+kezdőpálya és azonos lépéssorozat mellett a könnyű MI döntései az adott
+implementációverzión belül megismételhetők. A felhasználónak nem kell
+véletlenmagot megadnia.
+
+A gépi körök közötti késleltetés aszinkron; ezalatt a felület újrarajzolhat
+és kezelheti a megszakítást. Egyszerre egy lépés végrehajtása engedélyezett.
+A beviteli kérés az aktuális játszma és kör verziójához kötött; elavult
+kérés elutasítandó. Felfüggesztéskor vagy megszakításkor a várakozó
+gépi feladat törölhető. Az alkalmazás a későn visszatérő eredményt csak
+az eredeti, még aktuális körhöz alkalmazhatja. Külön szálkezelésre és
+elosztott szinkronizációra nincs szükség.
+
+\subsection{Build és átadás}
+A megvalósításhoz .NET SDK, a futtatáshoz WebAssembly-képes asztali
+böngésző és a statikus fájlokat kiszolgáló HTTP(S)-kiszolgáló kell.
+A felhasználónak nem kell .NET-et telepítenie. A projekt tervezett
+ellenőrzési parancsai: \texttt{dotnet build}, \texttt{dotnet test},
+majd a webprojekt \texttt{dotnet publish -c Release} parancsa.
+A pontos projektútvonalak a megvalósítás README-jébe kerülnek.
+
+Az átadás része a forráskód, a publikált statikus alkalmazás, az
+egyeztetett specifikáció PDF-je és LaTeX-forrása, a tényleges architektúrát
+bemutató rendszerterv, a telepítési/futtatási leírás és a rövid
+tesztjegyzőkönyv. A bemutató a csapat laptopján is végrehajtható;
+nyilvános hosztolás nem előfeltétel. A rendszertervnek a megvalósult
+rétegeket, a függőségeket, a minták helyét és a korlátokat kell rögzítenie.
+
+\section{Elfogadási és ellenőrzési terv}
+\label{sec:elfogadas}
+A tesztek a szabályokat és a fontos életciklus-eseteket vizsgálják.
+A játéklogikához és a gépi döntésekhez automatizált .NET-tesztek készülnek;
+a felületre rövid, kézzel végrehajtható forgatókönyvek elegendők.
+Teljes böngészőautomatizálási keretrendszer nem része a vállalásnak.
+
+\subsection{Követelményekhez rendelt elfogadási esetek}
+\begin{longtable}{@{}P{10mm}P{22mm}P{\dimexpr\linewidth-32mm-4\tabcolsep\relax}@{}}
+\toprule
+Eset & Követelmény & Vizsgálat és elvárt eredmény \\
+\midrule
+\endhead
+\azon{E01} & F01--F02, M07 & Két, három és négy résztvevővel új játszma
+indítható. Hiányzó név, 21 karakteres név, névazonosság vagy kizárólag
+gépi résztvevők esetén hibaüzenet jelenik meg, és nincs új játszma.
+A \texttt{<b>Anna</b>} név szó szerint látszik. Kézi és validációs teszt. \\
+\azon{E02} & F02, M01 & Rögzített véletlenmaggal egyező pálya készül,
+120 mezővel, a megfelelő kezdőpontokkal és különböző kezdőszínekkel.
+A kezdeti azonos színű komponensek már a játékosokhoz tartoznak.
+Automatizált generátor- és invariánsteszt. \\
+\azon{E03} & F03, M01 & Előkészített állapotban egyetlen lépés a
+választott szín teljes elérhető semleges komponensét elfoglalja,
+de az elkülönült azonos színű mezőt és az ellenfelet nem.
+A részletes példa lent található. Automatizált teszt. \\
+\azon{E04} & F03, F05, M04 & Saját vagy ellenfélszín választása esetén
+a szín tiltottként látszik. A szabálykezelő közvetlen hibás hívása is
+változatlan állapotot és körsorrendet hagy. Kézi és automatizált teszt. \\
+\azon{E05} & F03, M01 & Szabályos, nulla növekedésű lépés átszínezi
+a területet és továbbadja a kört. A játék futó marad, ha maradt
+semleges mező. Automatizált teszt. \\
+\azon{E06} & F04, M05 & Normál gép a teljes láncfoglalás szerinti
+maximumot választja; azonos nyereségnél a kisebb színazonosítót.
+A próbák nem módosítják az eredeti állapotot. Automatizált teszt. \\
+\azon{E07} & F04 & Vezérelt véletlenforrással külön vizsgálandó a
+30\%-os hibázási és a 70\%-os mohó ág, valamint az a helyzet, amikor
+nincs gyengébb választás. Mindig szabályos szín az eredmény.
+A valószínűséget nem véletlenszerűen sikerülő teszt ellenőrzi. \\
+\azon{E08} & F03--F05 & Három- és négyszereplős vegyes játszmában
+a listabeli sorrend ismétlődik. Két egymást követő gép két külön lépést
+végez, majd a következő ember kapja a vezérlést. Kézi és vezérlési teszt. \\
+\azon{E09} & F06, M01 & Az utolsó semleges mező elfoglalása után
+nincs körváltásból származó új lépés. A pontszámok összege 120;
+egyedi maximum győzelmet, többes maximum döntetlent ad.
+Külön vizsgálandó a már induláskor teljesen birtokolt pálya. \\
+\azon{E10} & F07--F08, M04 & Gépi várakozás alatt a szabálynézet és
+megszakítási kérdés megnyitása felfüggeszti a kört. Bezárás/elutasítás
+után azonos állapotból folytatódik. Megerősített új játék után régi
+gépi eredmény nem kerül az új pályára. Kézi és vezérlési teszt. \\
+\azon{E11} & F03, M04 & Gyors kettős aktiválás és egy korábbi kör
+verziójával beküldött lépés nem eredményez két állapotváltozást.
+Kézi és automatizált teszt. \\
+\azon{E12} & F05, M02--M03, M06 & A két célböngészőben helyesen
+látszik a pálya és az állás; a játék billentyűzettel lejátszható.
+A tulajdonos a színtől függetlenül felismerhető. A 30 lépéses
+válaszidőmérés teljesíti az M03 korlátait. Kézi teszt és mérés. \\
+\bottomrule
+\end{longtable}
+
+\subsection{Konkrét láncfoglalási példa az E03 esethez}
+Az alábbi részállapot szabályos játszma közbenső tesztállapota. A
+táblázatban nem szereplő mezők nem képeznek további kék, semleges láncot.
+Az ellenfél jelenlegi színe piros, az 1. játékosé zöld; a kék választható.
+
+\begin{tabularx}{\linewidth}{@{}lYYY@{}}
+\toprule
+Mező & Kezdeti szín & Kezdeti tulajdonos & Kék lépés után \\
+\midrule
+$(0,0)$ & zöld & 1. játékos & kék, 1. játékos \\
+$(1,0)$ & zöld & 1. játékos & kék, 1. játékos \\
+$(2,0)$ & kék & semleges & kék, 1. játékos \\
+$(2,1)$ & kék & semleges & kék, 1. játékos \\
+$(3,1)$ & kék & semleges & kék, 1. játékos \\
+$(1,1)$ & sárga & semleges & változatlan \\
+$(8,6)$ & kék & semleges & változatlan, nincs kék összeköttetés \\
+$(11,9)$ & piros & 2. játékos & változatlan \\
+\bottomrule
+\end{tabularx}
+
+A három új kék mező egy lépésben foglalódik el. Az 1. játékos pontszáma
+ebben a részállapotban 2-ről 5-re nő. A példát egy teljes, 120 mezős
+tesztpályába kell beágyazni, hogy a körváltás is ellenőrizhető legyen.
+
+\subsection{Az alapváltozat elfogadásának feltétele}
+Az F01--F08 működés rendelkezésre áll, az E01--E12 esetek teljesülnek,
+a szabály- és vezérlési tesztek sikeresek, és nincs a játszma befejezését
+akadályozó ismert hiba. A csapat tiszta forrásból reprodukálni tudja
+a buildet és a bemutatót. A fennmaradó kisebb korlátokat a dokumentáció
+rögzíti. Az opcionális bővítések nem feltételei az alapváltozat elfogadásának.
+
+\begingroup
+\raggedright
+\small
+\begin{thebibliography}{9}
+\bibitem{adatlap} BME VIK: \emph{Szoftverarchitektúrák (VIAUMA21),
+tantárgyi adatlap}. \url{https://portal.vik.bme.hu/kepzes/targyak/VIAUMA21/}
+\bibitem{utmutato} BME AUT: \emph{Szoftverarchitektúrák -- házi feladat
+hallgatói útmutató, 2026}.\newline
+\url{https://www.aut.bme.hu/Upload/Course/VIAUMA06/publikus_anyagok/HaziFeladatHallgatoiUtmutato_2026.pdf}
+\bibitem{tantargy} BME AUT: \emph{Szoftverarchitektúrák tantárgyi oldal,
+2026-os határidők}. \url{https://www.aut.bme.hu/Course/VIAUMA06}
+\bibitem{minta} BME AUT: \emph{Házi feladat dokumentáció minta
+(követelményspecifikáció és rendszerterv)}.\newline
+\url{https://www.aut.bme.hu/Upload/Course/VIAUMA06/publikus_anyagok/sza_hf_minta.pdf}
+\bibitem{blazor} Microsoft Learn: \emph{ASP.NET Core Blazor hosting models,
+ASP.NET Core 10.0}.\newline
+\url{https://learn.microsoft.com/en-us/aspnet/core/blazor/hosting-models?view=aspnetcore-10.0}
+\bibitem{dotnet} Microsoft: \emph{.NET and .NET Core support policy}.\newline
+\url{https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core}
+\end{thebibliography}
+A külső források ellenőrzésének dátuma: 2026. október 7.
+A források az oktatási és technológiai keretet adják; a játék konkrét
+követelményeit a \texttt{task.md} és e dokumentum egyeztetett változata rögzíti.\par
+\endgroup
+\end{document}
