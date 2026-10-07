@@ -1,15 +1,27 @@
-# softarch-territory-capture-game
+# Territory capture game
 
-This is the repository for the Software Architectures subject's group homework, specifically for the territory capture game.
+BME Software Architectures group project. [Specification](docs/specification.tex).
 
-See the specification in the /docs folder
+## Build
 
-## Editing
+Requires Make, latexmk and TeX Live with Hungarian support.
 
-When using vscode, in the settings.json include
+Copy `docs/personal-data.example.tex` to `docs/personal-data.tex` and fill in
+member details. The local file is Git-ignored; without it, placeholders are used.
+Escape LaTeX special characters, e.g. `\_` in email addresses.
+
+```sh
+make -C docs
+```
+
+Output: `docs/build/specification.pdf`, including your local details.
+
+## LaTeX Workshop
+
+Use the default latexmk recipe and add this workspace setting:
 
 ```json
 "latex-workshop.latex.outDir": "%DIR%/build"
 ```
 
-for latex workshop to pickup the build directory.
+Reload the window, then press **Ctrl+Alt+B**.

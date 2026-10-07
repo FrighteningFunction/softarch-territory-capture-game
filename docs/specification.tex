@@ -28,9 +28,7 @@
 \clubpenalty=10000
 \widowpenalty=10000
 \newcolumntype{Y}{>{\raggedright\arraybackslash}X}
-% Beadás előtt kitöltendő csapatadatok.
-\newcommand{\csapatnev}{Kitöltendő}
-\newcommand{\konzulens}{Kitöltendő}
+% Alapértékek; a helyi, Git által figyelmen kívül hagyott fájl felülírhatja őket.
 \newcommand{\tagA}{Kitöltendő}
 \newcommand{\tagB}{Kitöltendő}
 \newcommand{\tagC}{Kitöltendő}
@@ -43,16 +41,14 @@
 \newcommand{\emailB}{Kitöltendő}
 \newcommand{\emailC}{Kitöltendő}
 \newcommand{\emailD}{Kitöltendő}
+\InputIfFileExists{personal-data.tex}{}{}
 
 \begin{document}
 \begin{center}
 {\Large\bfseries Hexagonális területfoglaló játék\par}
 {\large Követelményspecifikáció\par}
-BME -- Szoftverarchitektúrák, MSc házi feladat
+Szoftverarchitektúrák Házi Feladat
 \end{center}
-\textbf{Verzió:} 0.2 -- egyeztetési változat \hfill
-\textbf{Dátum:} 2026. október 7.\par
-\textbf{Csapat:} \csapatnev \hfill \textbf{Konzulens:} \konzulens
 
 \begin{tabularx}{\linewidth}{@{}YYY@{}}
 \toprule
@@ -336,36 +332,5 @@ A mentés ugyanazon webcímen, ugyanabban a böngészőprofilban érhető el.
 Oldalújratöltéskor a nem mentett változások elvesznek; a mentett állás
 a ,,Folytatás'' művelettel visszaállítható. Böngészőadatok törlése a mentést
 is törli. Nincs szükség központi adatbázisra vagy játékot vezérlő szerverre.
-
-\section{Követelmények}
-\textbf{M01 -- Helyesség.}
-Egy mezőnek legfeljebb egy tulajdonosa van; a terület összefüggő,
-egyszínű és tartalmazza a kezdőmezőt. A pontszámok és a semleges mezők
-számának összege 120. Ismételt vagy elavult művelet nem okozhat újabb lépést.
-
-\textbf{M02 -- Használhatóság.}
-Magyar feliratok és áttekinthető pálya, játékoslista és színválasztó.
-Az aktuális játékos egyértelmű. A tulajdonost játékosszám is jelzi,
-a színgombokhoz szöveges színnév tartozik.
-
-\textbf{M03 -- Válaszidő.}
-A betöltött alkalmazásban az emberi és gépi lépés eredménye egy
-másodpercen belül megjelenik a 120 mezős pályán. Ellenőrzése a bemutató
-laptopon, Release builddel történik; a gép adatai a tesztjegyzőkönyvbe kerülnek.
-
-\textbf{M04 -- Karbantarthatóság.}
-A három réteg felelőssége és függősége elkülönül. A színválasztás,
-láncfoglalás, körváltás és eredmény automatizált .NET-tesztekkel,
-böngésző nélkül ellenőrizhető.
-
-\textbf{M05 -- Bemenetkezelés és biztonság.}
-A beállítások és a lépések érvényességét a logika is ellenőrzi.
-Nyilvános webes kiszolgálás HTTPS-en történik. Fiók és adatgyűjtés nincs;
-a rendszer helyi, megbízható résztvevők közös játékára készül.
-
-\textbf{M06 -- Tartós állapot helyessége.}
-Mentés és böngésző-újraindítás utáni folytatáskor a pálya, a résztvevők
-és az aktuális kör egyeznek. Hibás mentés nem indíthat érvénytelen játszmát;
-tárolási hiba nem módosíthatja a futó állapotot.
 
 \end{document}
