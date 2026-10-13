@@ -1,0 +1,6 @@
+body { font-family: system-ui, sans-serif; margin: 0; background: #f5f5f5; color: #222; }
+main { max-width: 960px; margin: 2rem auto; padding: 0 1rem; }
+.notice { padding: 1rem; background: #fff1c2; }
+nav { display: flex; flex-wrap: wrap; gap: .5rem; }
+button { font: inherit; padding: .5rem 1rem; cursor: pointer; }
+svg { display: block; width: min(100%, 640px); }

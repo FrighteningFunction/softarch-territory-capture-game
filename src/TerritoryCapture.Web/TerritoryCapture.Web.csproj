@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.0" PrivateAssets="all" />
+    <ProjectReference Include="../TerritoryCapture.Contracts/TerritoryCapture.Contracts.csproj" />
+    <ProjectReference Include="../TerritoryCapture.Application/TerritoryCapture.Application.csproj" />
+    <ProjectReference Include="../TerritoryCapture.Rules/TerritoryCapture.Rules.csproj" />
+    <ProjectReference Include="../TerritoryCapture.Infrastructure/TerritoryCapture.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(Configuration)' != 'Debug'">
+    <Compile Remove="Development/**/*.cs" />
+  </ItemGroup>
+</Project>
