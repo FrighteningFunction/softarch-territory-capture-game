@@ -1,6 +1,6 @@
 # Architecture and work plan for four contributors
 
-This is the implementation plan for the requirements in [specification.tex](specification.tex), including F01–F08 and UC01–UC07. It divides work by independently testable components rather than by screens or successive phases. Contributors A–D are placeholders for the four team members. Assign names once; the responsibilities below then remain stable.
+This is the implementation plan for the requirements in [specification.tex](specification.tex), including F01–F08 and UC01–UC07. It divides work by independently testable components rather than by screens or successive phases. Contributors A–D are placeholders for the four team members. Assign names once; the responsibilities below then remain stable. The working rhythm is one 30-minute weekly catchup plus short written reviews when a shared contract changes. Start with [section 7](#7-concrete-delivery-milestones-and-weekly-catchups) for assignments and demo milestones; use sections 3–6 as the implementation reference. The final deadline is November 30, 2026; target a submission-ready version by November 23 to preserve a one-week contingency buffer. Track progress at each weekly catchup.
 
 The official assignment permits C# with MAUI, WinUI or Blazor. This repository has already selected **C#, .NET 10, standalone Blazor WebAssembly**, and this plan keeps that decision. The application runs in the browser and can be deployed to a static HTTP(S) host. No backend, account system or database is required.
 
@@ -49,10 +49,11 @@ tests/
   TerritoryCapture.Application.Tests/     B
   TerritoryCapture.Infrastructure.Tests/  D
   TerritoryCapture.Web.Tests/             C
-  TerritoryCapture.Integration.Tests/     B coordinates; all contribute cases
+  TerritoryCapture.Integration.Tests/     B: controller/rules integration
+  browser/                               D: published-app smoke checks
 ```
 
-All projects target `net10.0`; Web uses the Blazor WebAssembly SDK. Use xUnit for ordinary .NET tests and bUnit for component tests. Add a small Playwright browser suite for actual WebAssembly and `localStorage` behavior. Pin compatible dependency versions and the SDK when creating the solution; commit dependency lockfiles and use locked restore in CI.
+All projects target `net10.0`; Web uses the Blazor WebAssembly SDK. Use xUnit for rules, controller, strategy and codec tests. C uses bUnit for command wiring and disabled-input behavior. D owns a small Playwright smoke suite for a real move, automatic AI, and save/reload/resume; remaining browser acceptance cases may be checked manually and recorded. Do not build a second comprehensive test suite around every UI detail. Pin compatible dependency versions and the SDK when creating the solution; commit dependency lockfiles and use locked restore locally. Each contributor writes and runs tests for their own component before handing it over. The project coordinator will create a basic pipeline that runs the whole-project tests; pipeline setup is not a contributor deliverable or a prerequisite for local work.
 
 ```mermaid
 flowchart TD
@@ -66,16 +67,16 @@ flowchart TD
 
 Arrows are **compile-time references**, not calls to concrete implementations. At runtime DI supplies the rules engine, strategy and storage adapter to the controller. Web also references Rules to register its implementation. Application must not reference Infrastructure, Rules implementations, Blazor or JavaScript. Rules and Contracts must not reference browser APIs. Infrastructure uses `IJSRuntime` only in its browser adapter; its codec and strategy are ordinary .NET classes.
 
-Contracts is one small shared assembly, not a fifth development stream. A owns its board/state and rules types; B owns the controller, persistence port and view types; D owns the strategy port and serialized schema. C reviews UI usability of the public facade. B coordinates changes to this assembly and solution-wide configuration. Keep ownership in a checked-in contributor table or CODEOWNERS when actual usernames are known.
+Contracts is one small shared assembly, not a fifth development stream. A owns its board/state and rules types; B owns the controller, persistence port and view types; D owns the strategy port and serialized schema. C reviews UI usability of the public facade. B coordinates public-contract decisions; D owns solution-wide configuration; the project coordinator owns the basic whole-project test pipeline. Replace A–D in the table below with actual names before starting. This table is the ownership record; a separate CODEOWNERS setup is optional.
 
-| Contributor | Owned implementation | Requirements / use cases | Independent development substitute |
+| Contributor | Owned implementation | Requirements / use cases (IDs from the specification) | Independent development substitute |
 | --- | --- | --- | --- |
-| **A — rules and model** | Hex geometry, generation, move validation, capture, score/end derivation, state validation | F01–F03 and F05–F06 calculations; UC01/02/04 | Hand-built immutable states; no UI, storage or AI needed |
-| **B — application and integration** | Game controller, command admission, turn lifecycle, cancellation, view projection, DI contract coordination and integration tests | F01–F08 orchestration; UC01–UC07 | Fake rules engine, controllable strategy and in-memory save store |
-| **C — Blazor presentation** | Setup/game/result screens, SVG grid, palette, owner labels, scores, errors, component tests, Web composition and static-host instructions | F01/F03/F05–F08 presentation; human interaction | Fake controller with predefined setup/human/computer/result views |
-| **D — strategy and persistence** | Greedy strategy, JSON schema/codec, browser save adapter, storage errors, adapter/strategy tests | F04/F07/F08; UC03/06/07 | Fake rules engine, fixture states, in-memory/fake JavaScript storage |
+| **A — rules and model** | Hex geometry, generation, move validation, capture, score/end derivation, state validation | **Requirements:** F01 setup/initial board, F02 capture, F03 turn advancement, F05 score calculations, F06 finish/winners. **Use cases:** UC01 start game, UC02 human move, UC04 view results. | Hand-built immutable states; no UI, storage or AI needed |
+| **B — application and integration** | Game controller, command admission, turn lifecycle, cancellation, view projection, DI contract coordination and integration tests | **Requirements:** F01–F08 orchestration of setup, moves, turns, AI, game display, finish/reset, save and resume. **Use cases:** UC01 start game, UC02 human move, UC03 computer turn, UC04 view results, UC05 new game, UC06 save, UC07 resume. | Fake rules engine, controllable strategy and in-memory save store |
+| **C — Blazor presentation** | Setup/game/result screens, SVG grid, palette, owner labels, scores, errors, component tests, Web composition and static-host instructions | **Requirements:** F01 setup UI, F03 turn/input display, F05 board/scores, F06 results/new game, F07 save feedback, F08 resume feedback. **Use cases:** UC01 start game, UC02 human move, UC04 view results, UC05 new game, UC06 save, UC07 resume; UC03 computer-turn indication. | Fake controller with predefined setup/human/computer/result views |
+| **D — strategy, persistence and tooling** | Solution/test setup, greedy strategy, JSON schema/codec, browser save adapter, storage errors, adapter/strategy tests and browser smoke suite | **Requirements:** F04 greedy AI, F07 save storage, F08 load storage. **Use cases:** UC03 computer turn, UC06 save, UC07 resume. | Fake rules engine, fixture states, in-memory/fake JavaScript storage |
 
-B has the largest integration responsibility. Their compensation is that A owns all game calculations and D owns both AI selection and serialization. C owns the startup/deployment instructions and browser rendering checks. Each person writes tests for their own component and contributes integration cases; testing is not assigned to a separate person.
+B owns controller integration, not every shared task. D owns the build skeleton and browser smoke suite; C owns Web composition, UI integration and deployment instructions; A supplies validated fixtures and all game calculations. Each person connects their own delivery through the agreed interface and supplies passing tests. B does not fix another owner's implementation on their behalf.
 
 ## 3. Shared data and pure rules contract
 
@@ -180,7 +181,7 @@ public interface IGameController {
 }
 ```
 
-`GameState` in a view is read-only board data. `Players` adds scores from the rules summary; `WinnerIds` is empty unless the game finished. The application computes `CanSave` and legal human buttons; during computer turns, busy operations or results, the view's legal colors are empty. `BackgroundError` is normally `None` and exposes a supervised computer-runner failure that has no awaiting UI command. Error enum values map to Hungarian UI messages; exception text is not a user-facing error message.
+`GameState` in a view is read-only board data. `Players` adds scores from the rules summary; `WinnerIds` is empty unless the game finished. The application computes `CanSave` and legal human buttons; during computer turns, busy operations or results, the view's legal colors are empty. `BackgroundError` is normally `None` and exposes a supervised computer-runner failure that has no awaiting UI command. Error enum values map to UI messages; exception text is not a user-facing error message.
 
 The token prevents a delayed click or double click from becoming a move on a later human turn. Increment revision on every view transition, including busy changes; issue a new session ID on start, successful resume and return to setup. Invalid commands do not increment game turn number. `StartAsync` and `ResumeAsync` are accepted only from idle setup. `ChooseColorAsync` requires a matching token and an idle running human turn. `SaveAsync` has the same token/admission rules and never changes the game state.
 
@@ -235,9 +236,9 @@ On save, B captures an already validated, complete state at an idle human turn a
 
 Keep the adapter thin: codec unit tests use strings; storage tests use fake JS calls; the actual browser test verifies `setItem/getItem` survive reload at the same origin. `localStorage` contains only local game data; no server synchronization or authentication is introduced.
 
-## 6. Individual acceptance tests
+## 6. Individual acceptance checks
 
-Each contributor's PR must run without the others' unfinished implementations. Test doubles live in test projects or an explicit development-only harness and are never selected by the release composition root. Agree on a small shared fixture pack, including exact expected owners, next player and scores; do not generate expected answers by calling the implementation under test.
+Each contributor's PR must run without the others' unfinished implementations. The table is the component's cumulative acceptance checklist, not a requirement to complete every case in its first PR. Automate rules, controller, strategy and codec correctness; C automates command wiring and input gating, and records visual/layout checks manually. Test doubles live in test projects or an explicit development-only harness and are never selected by the release composition root. Agree on a small shared fixture pack, including exact expected owners, next player and scores; do not generate expected answers by calling the implementation under test.
 
 | Owner | Minimum independently verifiable cases |
 | --- | --- |
@@ -248,57 +249,92 @@ Each contributor's PR must run without the others' unfinished implementations. T
 
 For small hand-built capture/AI examples, construct a 120-cell board with a controlled local pattern and irrelevant regions filled deliberately. Helpers must create internally valid ownership and player colors. For initialization edge cases that random generation rarely produces, A may use an internal deterministic color source exposed to the test assembly; it is not a production gameplay interface.
 
-Property checks complement explicit examples: all owned territories remain monochromatic and connected; cell count stays fixed; existing opponent owners never change; a move cannot reduce territory size; and the old immutable state stays identical after simulation. Random-seed samples are useful but do not replace the explicit edge-case assertions.
+Use the following invariants as assertions in the explicit move tests; a separate property-testing framework is optional: all owned territories remain monochromatic and connected; cell count stays fixed; existing opponent owners never change; a move cannot reduce territory size; and the old immutable state stays identical after simulation. Random-seed samples are useful but do not replace the explicit edge-case assertions.
 
-## 7. Integration without continuous meetings
+## 7. Concrete delivery milestones and weekly catchups
 
-### Gate 0 — shared contracts and skeleton
+Work through these milestones in order, using the target dates below. Owners may start later independent tasks as soon as their contracts exist. Do not defer a ready integration until the meeting.
 
-B opens one small PR containing the solution, project references, shared types/interfaces, test project setup, pinned tooling and the fixture format. A–D review only their relevant contract semantics asynchronously. No implementation is required for approval, but the skeleton must build and each test project must execute at least one real contract/fixture assertion. Merge this before four parallel implementation branches begin.
+| Target date (2026) | Required result |
+| --- | --- |
+| October 26 | Milestone 0: contracts, fixtures and runnable skeleton; everyone can work independently. |
+| November 9 | Milestone 1: a real human game works through the browser UI. |
+| November 16 | Milestone 2: all required workflows work with real components; feature freeze. |
+| November 23 | Milestone 3: acceptance, documentation and submission package complete; ready to submit. |
+| November 24–30 | One-week contingency buffer for unexpected defects, packaging or submission issues. |
+| November 30 | Final submission deadline. |
 
-The first fixture pack should include: a valid human turn, a valid computer turn, a multihop capture case, a zero-gain case, a two-way draw, and a version-1 JSON save. Include a pending-computer test double for B and predefined views for C. Fixtures have expected outcomes written by hand and reviewed by the relevant owners.
+Plan ordinary implementation, acceptance and documentation to finish by November 23. The buffer is not allocated to unfinished features or optional polish. Submit once the package is ready and submission is available; November 30 is the deadline, not the planned finishing day.
 
-### Gate 1 — four independent component deliveries
+### Milestone 0 — everyone can work alone
 
-All four streams can proceed after Gate 0:
+Complete the shared setup first, targeting October 26. This is the only deliberate shared startup dependency. During setup, owners can begin private implementation and UI layout work against the draft contracts; merge the agreed contracts before connecting components. This lets later implementation overlap with setup rather than waiting until October 26 to start.
 
-- A implements Rules against state fixtures.
-- B implements the controller against fake rules/strategy/storage and owns the integration harness.
-- C implements the UI against the fake controller.
-- D implements strategy and persistence against fake rules/JS and the JSON fixtures.
+| Owner | Deliverable |
+| --- | --- |
+| D | Create the solution/projects, pinned SDK/dependencies and local test setup. Commit the exact build/test commands so everyone can run their own tests and the whole-project tests locally. |
+| A | Commit the section 3 state/rules contracts and shared fixtures for a valid human turn, a valid computer turn, multihop capture, zero gain and a draw. Record expected owners, gains, scores and next player by hand. |
+| B | Commit the section 4 controller/view contracts and section 5 save port. Add controllable rules/strategy/storage doubles for controller tests, including a paused computer turn. Coordinate the short contract review. |
+| C | Add a runnable Web shell with a fake controller showing setup, human, computer and result views. Verify that the facade provides everything needed to render and submit commands. |
+| D with A | Commit the strategy/snapshot/store-result contracts and a valid version-1 JSON fixture matching A's human-turn state. |
 
-Each delivery includes its own passing tests and an example showing how to register/call it. An implementation is ready to connect when it satisfies the agreed contract, not when another person's screen works. Do not block a completed component waiting for the entire application.
+Confirm the shared dependency signatures during setup. Merge the skeleton and contracts before implementation branches diverge. After this milestone, each owner must be able to build and demonstrate their component without another unfinished implementation. Shared fixtures live in one test-support location created by D; A owns their game-state contents. C's fake controller stays in an explicit development harness and cannot be registered by release startup.
 
-### Gate 2 — early real integration
+**Demo/check:** clean checkout builds and tests; C can run the fake UI; A, B and D can run their own fixture-based tests. Record the commands in README. Do not spend this milestone polishing screens or implementing all rules.
 
-Connect real components in small PRs as they become available, in this useful order:
+### Milestone 1 — a real human game
 
-1. Rules + controller: start a seeded game and execute a human move through the facade.
-2. Greedy strategy + controller: play human–computer and human–computer–computer setups; verify input gating and turn handoff.
-3. Web + controller: render and execute those same scenarios through the real UI.
-4. Store + controller + Web: save a human turn, reload the browser, resume and compare the complete board/players/next player.
+| Owner | Deliverable |
+| --- | --- |
+| A | Implement generation, hex neighbors, legal colors, capture, turn advancement, summary and end detection. Supply focused tests for adjacency, full capture, opponent blocking, zero gain, immutable input and win/draw. Begin save-state validation. |
+| B | Implement start, human move admission, view projection and return to setup against doubles; connect real Rules as soon as A's start/move path is ready. Test stale clicks and exactly one move per accepted command. |
+| C | Implement participant setup, SVG board, owner labels, scores, palette and result view against the fake controller. Connect the real controller through the same interface as soon as B's human path is ready; own the Web DI edits. |
+| D | Implement greedy selection against fixtures and JSON encode/decode with round-trip and invalid-input tests. Run the strategy/codec tests locally; document service registrations for C. |
 
-These are integration dependencies, not a calendar. Connect the available components even when another component still uses a fake. Do not wait until every contributor declares their work finished before testing the first complete move.
+**Demo/check:** start a real two-human game in the browser, make several moves, verify capture and scores, and return to setup. A demonstrates a deterministic win/draw fixture through tests. UI polish, storage and automatic AI may still be unfinished. Missing owners/state/turn behavior blocks this milestone; spacing and visual polish do not.
 
-### Gate 3 — acceptance and delivery
+### Milestone 2 — every required workflow works
 
-Use real components and the release DI configuration. Require:
+| Owner | Deliverable |
+| --- | --- |
+| A | Finish `Validate`, including ownership, connectivity, capture closure and phase consistency. Add any missing initialization/invalid-state cases. Support integration defects in Rules. |
+| B | Implement the supervised computer loop, cancellation/reset, save/load admission and validated resume. Test consecutive computer turns, reset during a paused turn and ignored old-session completions. Connect D's real services. |
+| C | Connect all real services in release DI. Show computer/busy states, save/resume controls and errors. Verify tokens and disabled input with focused component tests. |
+| D | Finish the browser storage adapter and error mapping. Verify failed writes preserve the previous save. Add Playwright smoke checks against published output for a move, automatic AI and exact save/reload/resume. |
 
-- Locked restore, Release build, nonzero passing test suites for every implemented component, and a publish of the standalone WebAssembly app.
-- Serve the **published** static output over HTTP in the browser suite. A development server alone does not validate deployment assets. Document any required static-host MIME settings and path/base-address configuration.
-- Actual browser coverage for starting a mixed game, moving/capturing, automatic AI, illegal input, results/new game, save/reload/resume, and missing/corrupt saves. Use a test-only deterministic state seam to reach end/draw states; production must not expose an arbitrary-state import control.
-- Current stable Chrome and Edge checks at the specified resolution. Headless Chromium CI is useful but does not establish that Edge was checked; record the actual browser/version used for final acceptance.
-- A feature-to-test checklist covering F01–F08/UC01–UC07, class/dependency documentation and a short deployment/readme update. No acceptance item is “done” based solely on a mock test.
+Integrate in this order as services become ready: Rules + controller; strategy + controller; UI + controller; storage + controller + UI. C makes the Web registrations using each owner's supplied example; B handles orchestration mismatches; defects within a component return to its owner.
 
-Once the solution exists, standard commands are `dotnet restore --locked-mode`, `dotnet build --configuration Release --no-restore`, `dotnet test --configuration Release --no-build` with the selected .NET 10 test runner, and `dotnet publish src/TerritoryCapture.Web/TerritoryCapture.Web.csproj --configuration Release --no-restore`. The skeleton PR must confirm these commands against the actual solution and record the separate browser-test command and browser installation instructions. This plan does not claim they have run before the projects exist.
+**Demo/check:** start a human–computer–computer game, observe automatic turns, make a human move, save, reload and resume with the exact board and next player. Reset while a computer turn is pending and show that it cannot affect a new game. Missing/corrupt saves show an error and leave setup usable. No required workflow may rely on a fake.
 
-## 8. Asynchronous collaboration rules
+### Milestone 3 — ready to submit
 
-- Each PR states its requirement IDs, owned files, public-contract impact, checks actually run, and any remaining integration limitation. Small PRs with one coherent deliverable are easier to review than a whole-person final submission.
-- Implementation details inside an owned component can change freely while its contract holds. A public signature, enum ID, coordinate convention or JSON schema change needs a brief issue with the proposed before/after and affected owners' written review. Submit all affected caller/fixture changes together; never silently break another branch.
-- B owns `.sln`/solution-wide build settings and coordinates Contracts; C owns Web startup/DI edits. Other contributors request the required registration changes in their PR rather than independently editing these shared files.
-- Keep tests and default builds green on the shared branch. Use branch/PR checks; do not merge code that works only with an uncommitted local file. Test doubles must not accidentally ship as production services.
-- When blocked, post the smallest reproducible fixture, observed result, expected contract behavior and the required owner decision. Continue independent tests/UI work against the agreed fake. Weekly catchups review contract issues, completed gates and acceptance gaps; this plan imposes no dates.
-- Each owner includes a short component handover: public API, invariants, how to run its tests, known limitations and the next integration step. This lets someone else finish a component if a teammate becomes unavailable.
+| Owner | Deliverable |
+| --- | --- |
+| A | Close remaining rules defects; document the state invariants and capture algorithm. |
+| B | Complete the F01–F08/UC01–UC07 acceptance checklist, mapping each item to a test or recorded manual check; document controller lifecycle and dependencies. |
+| C | Check the published application in actual stable Chrome and Edge at 1280 × 720, including owner readability, final win/draw views and new game. Record browser versions and finish static-host/README instructions. |
+| D | Verify locked restore, Release build/tests, publish and browser smoke suite from a clean checkout. Document the JSON schema and save behavior. |
 
-The unavoidable shared work is the initial contract review, boundary changes and integration acceptance. The day-to-day implementations remain independent because shared state is immutable, calculations have one owner, and every dependency has a test substitute.
+Use a development/test-only deterministic fixture to reach win/draw states; do not add a production arbitrary-state import control. Check remaining browser cases manually: illegal input, result/new game, missing/corrupt saves and usable layout. Record the outcome; do not require a separate automated browser test for every acceptance item. Every feature needs evidence with real components, even when its focused unit tests use doubles.
+
+**Demo/check:** a teammate follows README from a clean checkout, serves the published output over HTTP, and plays/saves/resumes without help. All required features pass, release startup uses real services, and no known defect prevents acceptance. No additional features until this milestone passes.
+
+The skeleton must verify and record the actual commands, expected to include `dotnet restore --locked-mode`, `dotnet build --configuration Release --no-restore`, `dotnet test --configuration Release --no-build`, and `dotnet publish src/TerritoryCapture.Web/TerritoryCapture.Web.csproj --configuration Release --no-restore`. D also records the separate browser-test command and installation instructions. These are not claimed to have run before the projects exist.
+
+### Weekly catchup — 30 minutes, one shared checklist
+
+B maintains a single checked-in `docs/delivery-status.md`, created at Milestone 0. It contains the names assigned to A–D, current milestone, each owner's next deliverable, open blockers with decision owner, and links to merged PRs/demo evidence. This is the status source; do not create parallel personal status documents.
+
+Before the catchup, each person updates their row with: **delivered**, **next**, and **blocked**. During the catchup:
+
+1. **10 minutes:** demonstrate the current integrated application. Before the first real integration, show the runnable harness and component tests. Discuss observed failures rather than reciting activity.
+2. **10 minutes:** resolve open boundary decisions and assign integration defects to their component owners.
+3. **10 minutes:** agree on one concrete deliverable per person for the next catchup and update the checklist. A deliverable must state what will run or what test will pass.
+
+End with four written assignments and a named owner for every blocker. If a milestone slips, carry forward its missing required behavior and defer polish or optional testing infrastructure. If a target date is at risk, reassign a specific remaining task and defer optional polish at that catchup; keep November 23 as the submission-ready target. Weekly catchups remain the coordination rhythm.
+
+## 8. Independent work between catchups
+
+- Deliver the assigned component working against the agreed contracts and milestone acceptance checks.
+- Create a PR for each delivery, briefly describing what works.
+- Write and run the relevant tests locally; include the test commands and results in the PR.
