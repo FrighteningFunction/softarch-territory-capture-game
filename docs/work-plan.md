@@ -35,7 +35,7 @@ The official wording says play continues while there is capturable territory. Th
 
 ## 2. Project boundaries and ownership
 
-Create one solution with the following projects. These are proposed paths, not files already implemented in this checkout.
+Create one solution with the following projects. The starter solution now provides these projects, shared contracts, test support and a development preview. Rules, Application and Infrastructure await implementation; the preview is not a playable game. See README for local commands.
 
 ```text
 src/
@@ -319,11 +319,11 @@ Use a development/test-only deterministic fixture to reach win/draw states; do n
 
 **Demo/check:** a teammate follows README from a clean checkout, serves the published output over HTTP, and plays/saves/resumes without help. All required features pass, release startup uses real services, and no known defect prevents acceptance. No additional features until this milestone passes.
 
-The skeleton must verify and record the actual commands, expected to include `dotnet restore --locked-mode`, `dotnet build --configuration Release --no-restore`, `dotnet test --configuration Release --no-build`, and `dotnet publish src/TerritoryCapture.Web/TerritoryCapture.Web.csproj --configuration Release --no-restore`. D also records the separate browser-test command and installation instructions. These are not claimed to have run before the projects exist.
+The skeleton must verify and record the actual commands, expected to include `dotnet restore --locked-mode`, `dotnet build --configuration Release --no-restore`, `dotnet test --configuration Release --no-build`, and `dotnet publish src/TerritoryCapture.Web/TerritoryCapture.Web.csproj --configuration Release --no-restore`. D also records the separate browser-test command and installation instructions. README records the starter commands; owners extend the checks as real components arrive.
 
 ### Weekly catchup — 30 minutes, one shared checklist
 
-B maintains a single checked-in `docs/delivery-status.md`, created at Milestone 0. It contains the names assigned to A–D, current milestone, each owner's next deliverable, open blockers with decision owner, and links to merged PRs/demo evidence. This is the status source; do not create parallel personal status documents.
+B maintains the checked-in `docs/delivery-status.md` supplied with the starter. It contains the names assigned to A–D, current milestone, each owner's next deliverable, open blockers with decision owner, and links to merged PRs/demo evidence. This is the status source; do not create parallel personal status documents.
 
 Before the catchup, each person updates their row with: **delivered**, **next**, and **blocked**. During the catchup:
 

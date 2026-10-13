@@ -1,0 +1,75 @@
+@implements IDisposable
+@inject IEnumerable<IGameController> Controllers
+
+<PageTitle>Territory Capture — starter</PageTitle>
+<main>
+    <h1>Territory Capture</h1>
+    @if (controller is null)
+    {
+        <p>Project skeleton. Gameplay is awaiting implementation.</p>
+        <p>Run the Debug build to open the development preview.</p>
+    }
+    else
+    {
+        <p class="notice">Development preview — predefined screens, not playable game logic.</p>
+        <nav aria-label="Preview screens">
+            <button @onclick="() => controller.ReturnToSetupAsync()">Setup</button>
+            <button @onclick="() => controller.StartAsync(new NewGameOptions([PlayerKind.Human, PlayerKind.Human]))">Human turn</button>
+            <button @onclick="() => controller.StartAsync(new NewGameOptions([PlayerKind.Computer, PlayerKind.Human]))">Computer turn</button>
+            <button @onclick="() => controller.ResumeAsync()">Draw result</button>
+        </nav>
+        <h2>@controller.View.Screen</h2>
+        @if (controller.View.State is { } state)
+        {
+            <p>Current player: @(state.CurrentPlayerIndex + 1) · Neutral cells: @controller.View.NeutralCount</p>
+            <svg viewBox="0 0 480 340" role="img" aria-label="Hex board preview">
+                @foreach (var cell in state.Cells)
+                {
+                    <polygon points="@Points(cell.Id)" fill="@cell.Color.ToString().ToLowerInvariant()" stroke="#333" stroke-width="1">
+                        <title>Cell @cell.Id, owner @(cell.OwnerId?.ToString() ?? "neutral")</title>
+                    </polygon>
+                }
+            </svg>
+            @foreach (var player in controller.View.Players)
+            {
+                <p>Player @(player.Id + 1): @player.Kind · @player.Color · @player.Score cells</p>
+            }
+            <p>Legal colors: @string.Join(", ", controller.View.LegalColors)</p>
+            @if (controller.View.Screen == Screen.Result)
+            {
+                <p>Draw: players @string.Join(", ", controller.View.WinnerIds.Select(id => id + 1))</p>
+            }
+        }
+        else
+        {
+            <p>C: replace this preview with participant setup and game components.</p>
+        }
+    }
+</main>
+
+@code {
+    private IGameController? controller;
+    protected override void OnInitialized()
+    {
+        controller = Controllers.SingleOrDefault();
+        if (controller is not null) controller.Changed += OnChanged;
+    }
+    private void OnChanged() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose()
+    {
+        if (controller is not null) controller.Changed -= OnChanged;
+    }
+    private static string Points(int id)
+    {
+        const double radius = 20;
+        var row = id / 12;
+        var column = id % 12;
+        var x = 24 + Math.Sqrt(3) * radius * (column + 0.5 * (row % 2));
+        var y = 24 + 1.5 * radius * row;
+        return string.Join(" ", Enumerable.Range(0, 6).Select(vertex =>
+        {
+            var angle = (30 + vertex * 60) * Math.PI / 180;
+            return FormattableString.Invariant($"{x + radius * Math.Cos(angle):F2},{y + radius * Math.Sin(angle):F2}");
+        }));
+    }
+}

@@ -12,3 +12,11 @@ SpecifikacioMinta.pdf
 # exclude local helper notes with this suffix
 **_notes.md
 **_notes.tex
+
+# .NET generated output and local IDE state
+**/bin/
+**/obj/
+.vs/
+TestResults/
+artifacts/
+*.user
