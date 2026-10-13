@@ -2,6 +2,9 @@
 
 BME Software Architectures group project. [Specification](docs/specification.tex).
 
+[Architecture and four-person work plan](docs/work-plan.md): component ownership,
+shared interfaces, independent tests and integration gates.
+
 ## Build
 
 Requires Make, latexmk and TeX Live with Hungarian support.
