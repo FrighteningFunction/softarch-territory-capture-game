@@ -1,0 +1,31 @@
+name: PR build and tests
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build and test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Restore dependencies
+        run: dotnet restore TerritoryCapture.sln --locked-mode
+
+      - name: Build
+        run: dotnet build TerritoryCapture.sln --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test TerritoryCapture.sln --configuration Release --no-build --no-restore

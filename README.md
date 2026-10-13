@@ -35,7 +35,7 @@ Each person adds their implementation and tests in their own projects, runs test
 dotnet test tests/TerritoryCapture.Rules.Tests
 ```
 
-[Shared test support](tests/TerritoryCapture.TestSupport/README.md) provides hand-built states, expected outcomes, JSON and configurable dependency doubles. Existing tests verify these starter assets and preview wiring; they do not establish that gameplay has been implemented. Rules, Application and Infrastructure are empty implementation projects ready for their owners. Browser automation and the coordinator's basic test pipeline are not included in this starter.
+[Shared test support](tests/TerritoryCapture.TestSupport/README.md) provides hand-built states, expected outcomes, JSON and configurable dependency doubles. Existing tests verify these starter assets and preview wiring; they do not establish that gameplay has been implemented. Rules, Application and Infrastructure are empty implementation projects ready for their owners. Browser automation is not included in this starter. [PR checks](.github/workflows/pr-checks.yml) restore the pinned dependencies, build the solution and run all test projects in Release mode on each pull request.
 
 For final build checks:
 
