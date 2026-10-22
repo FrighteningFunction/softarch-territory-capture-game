@@ -27,7 +27,7 @@ The contracts match the work plan; all four implementations use these types.
 | A | `src/TerritoryCapture.Rules` and its tests | Implement `IGameRules.Create`, hex adjacency and `ApplyMove` using the shared fixtures. |
 | B | `src/TerritoryCapture.Application` and its tests | Implement `IGameController` start, human move and reset using test doubles. |
 | C | `src/TerritoryCapture.Web` and its tests | Replace the preview with setup/game components against `IGameController`; register real services as they arrive. |
-| D | `src/TerritoryCapture.Infrastructure` and its tests | Implement greedy selection and the JSON codec, then the browser save adapter. |
+| D | `src/TerritoryCapture.Infrastructure` and its tests | Greedy selection and JSON codec implemented; next add the browser save adapter. See the component README for usage and registration. |
 
 Each person adds their implementation and tests in their own projects, runs tests locally, and opens a PR describing what works and what tests passed. For a single component, for example:
 
@@ -35,7 +35,7 @@ Each person adds their implementation and tests in their own projects, runs test
 dotnet test tests/TerritoryCapture.Rules.Tests
 ```
 
-[Shared test support](tests/TerritoryCapture.TestSupport/README.md) provides hand-built states, expected outcomes, JSON and configurable dependency doubles. Existing tests verify these starter assets and preview wiring; they do not establish that gameplay has been implemented. Rules, Application and Infrastructure are empty implementation projects ready for their owners. Browser automation is not included in this starter. [PR checks](.github/workflows/pr-checks.yml) restore the pinned dependencies, build the solution and run all test projects in Release mode on each pull request.
+[Shared test support](tests/TerritoryCapture.TestSupport/README.md) provides hand-built states, expected outcomes, JSON and configurable dependency doubles. Rules and Application remain empty implementation projects; their tests verify starter assets. [Infrastructure](src/TerritoryCapture.Infrastructure/README.md) implements greedy selection and the version-1 JSON codec, tested independently against the shared fixtures and rules doubles. Preview tests verify the fake UI wiring. These checks do not establish integrated gameplay, browser storage or browser automation, which are not implemented yet. [PR checks](.github/workflows/pr-checks.yml) restore the pinned dependencies, build the solution and run all test projects in Release mode on each pull request.
 
 For final build checks:
 
