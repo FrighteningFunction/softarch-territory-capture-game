@@ -20,22 +20,23 @@ Open **http://localhost:5080**. The Debug app shows a labelled development previ
 
 ## Team handoff
 
-The contracts match the work plan; all four implementations use these types.
+The contracts match the work plan. Rules, the application controller, the greedy
+strategy and the version-1 snapshot codec are implemented against these types.
 
 | Owner | Start here | First implementation task |
 | --- | --- | --- |
-| A | `src/TerritoryCapture.Rules` and its tests | Implement `IGameRules.Create`, hex adjacency and `ApplyMove` using the shared fixtures. |
-| B | `src/TerritoryCapture.Application` and its tests | Implement `IGameController` start, human move and reset using test doubles. |
+| A | `src/TerritoryCapture.Rules` and its tests | Extend and validate `IGameRules` generation, hex adjacency and capture behavior. |
+| B | `src/TerritoryCapture.Application` and its tests | Extend controller tests and integrate its real rules/strategy dependencies. |
 | C | `src/TerritoryCapture.Web` and its tests | Replace the preview with setup/game components against `IGameController`; register real services as they arrive. |
-| D | `src/TerritoryCapture.Infrastructure` and its tests | Implement greedy selection and the JSON codec, then the browser save adapter. |
+| D | `src/TerritoryCapture.Infrastructure` and its tests | Extend the greedy strategy and codec; later add the browser save adapter. |
 
-Each person adds their implementation and tests in their own projects, runs tests locally, and opens a PR describing what works and what tests passed. For a single component, for example:
+Each person extends their implementation and tests in their own projects, runs tests locally, and opens a PR describing what works and what tests passed. For a single component, for example:
 
 ```sh
 dotnet test tests/TerritoryCapture.Rules.Tests
 ```
 
-[Shared test support](tests/TerritoryCapture.TestSupport/README.md) provides hand-built states, expected outcomes, JSON and configurable dependency doubles. Existing tests verify these starter assets and preview wiring; they do not establish that gameplay has been implemented. Rules, Application and Infrastructure are empty implementation projects ready for their owners. Browser automation is not included in this starter. [PR checks](.github/workflows/pr-checks.yml) restore the pinned dependencies, build the solution and run all test projects in Release mode on each pull request.
+[Shared test support](tests/TerritoryCapture.TestSupport/README.md) provides hand-built states, expected outcomes, JSON and configurable dependency doubles. Rules, Application and Infrastructure now have focused implementation tests. The Web project is still the scripted preview until C replaces it; browser save storage and browser automation remain later work. [PR checks](.github/workflows/pr-checks.yml) restore the pinned dependencies, build the solution and run all test projects in Release mode on each pull request.
 
 For final build checks:
 

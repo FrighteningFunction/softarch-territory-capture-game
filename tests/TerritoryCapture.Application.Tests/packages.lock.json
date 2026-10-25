@@ -102,6 +102,12 @@
       "territorycapture.contracts": {
         "type": "Project"
       },
+      "territorycapture.rules": {
+        "type": "Project",
+        "dependencies": {
+          "TerritoryCapture.Contracts": "[1.0.0, )"
+        }
+      },
       "territorycapture.testsupport": {
         "type": "Project",
         "dependencies": {
