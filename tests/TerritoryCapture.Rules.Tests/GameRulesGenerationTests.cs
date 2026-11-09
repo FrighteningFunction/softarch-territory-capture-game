@@ -1,6 +1,4 @@
-
 using TerritoryCapture.Contracts;
-using TerritoryCapture.Rules;
 using System.Collections.Immutable;
 
 namespace TerritoryCapture.Rules.Tests;
