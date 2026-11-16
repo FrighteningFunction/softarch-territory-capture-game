@@ -67,3 +67,14 @@ Encoding finishes before one `localStorage.setItem`; the old value is never dele
 Cancellation propagates as `OperationCanceledException`, including cancellation after an awaited JS call; it cannot undo an already committed JS write. B must ignore old-session completions and display success/failure only for the current session. B owns command admission and uses A's validator before installing a candidate. Store success does not establish game validity.
 
 No database, credentials, backend or custom JavaScript module is required. See the browser README for commands, schema evidence and the remaining real-application acceptance gate.
+
+## Verification — November 16, 2026
+
+Verified from a clean local clone of this branch, without pre-existing build outputs:
+
+- Locked solution and BrowserHarness restores succeeded; lockfiles remained unchanged.
+- Release solution build: zero warnings/errors.
+- Release and Debug solution tests: 50 passed in each configuration, including 45 Infrastructure cases; none failed or skipped. Existing Rules/Application starter tests do not establish real gameplay.
+- Release publication of both the production Web shell and the separate trimmed BrowserHarness succeeded.
+- `npm ci` and the seven infrastructure browser checks passed against the clean published harness using Debian Chromium 154.0.8037.57.
+- The three application smoke tests were discovered with `--list`, but were not run as acceptance: A/B/C's real implementations and C's proposed DOM hooks are not present on this branch/main. Actual Chrome/Edge game acceptance remains pending integration.
