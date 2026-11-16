@@ -1,0 +1,14 @@
+<Project>
+  <!-- SDK/workload defaults can drift independently of the selected SDK.
+       Keep all SDK-injected Blazor tool packages aligned with the lockfiles.
+       This also applies to the separate browser test harness. -->
+  <PropertyGroup Condition="'$(UsingMicrosoftNETSdkBlazorWebAssembly)' == 'true'">
+    <TerritoryCaptureWasmToolchainVersion>10.0.13</TerritoryCaptureWasmToolchainVersion>
+    <RuntimeFrameworkVersion>$(TerritoryCaptureWasmToolchainVersion)</RuntimeFrameworkVersion>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(UsingMicrosoftNETSdkBlazorWebAssembly)' == 'true'">
+    <PackageReference Include="Microsoft.NET.Sdk.WebAssembly.Pack" Version="$(TerritoryCaptureWasmToolchainVersion)" PrivateAssets="all" IsImplicitlyDefined="true" />
+    <PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="$(TerritoryCaptureWasmToolchainVersion)" PrivateAssets="all" IsImplicitlyDefined="true" />
+    <PackageReference Include="Microsoft.AspNetCore.App.Internal.Assets" Version="$(TerritoryCaptureWasmToolchainVersion)" PrivateAssets="all" IsImplicitlyDefined="true" />
+  </ItemGroup>
+</Project>

@@ -7,7 +7,7 @@ shared interfaces, independent tests and integration gates.
 
 ## Start development
 
-Install the [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0), matching `global.json` exactly (10.0.402). SDK roll-forward is disabled because newer SDK patches can change implicit Blazor/ILLink package references and invalidate locked restore. When upgrading the SDK, regenerate both the solution and BrowserHarness lockfiles and verify locked restore before committing the upgrade. Run from the repository root:
+Install the [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0), matching `global.json` exactly (10.0.402). SDK roll-forward is disabled. `Directory.Build.targets` also pins the Blazor runtime and WebAssembly/ILLink/internal-assets tool packages to 10.0.13; SDK/workload defaults alone do not guarantee consistent locked restore. For a toolchain upgrade, update these pins together, regenerate both the solution and BrowserHarness lockfiles, and verify locked restore before committing. Run from the repository root:
 
 ```sh
 dotnet restore --locked-mode
@@ -19,6 +19,8 @@ dotnet run --project src/TerritoryCapture.Web --no-restore
 Open **http://localhost:5080**. The Debug app shows a labelled development preview: setup, human turn, computer turn and draw. These are predefined screens, not playable game logic. Release builds exclude the demo controller and show the starter page until real services are connected.
 
 ## Team handoff
+
+CI also exercises locked restore with simulated newer Blazor pack defaults from `tests/build/newer-wasm-defaults.targets`. This regression check reproduces the hosted-runner `10.0.13` versus `10.0.15` mismatch without changing installed SDKs or updating lockfiles.
 
 The contracts match the work plan; all four implementations use these types.
 

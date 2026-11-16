@@ -27,6 +27,11 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore TerritoryCapture.sln --locked-mode
 
+      - name: Check locked restore against newer Blazor pack defaults
+        run: |
+          dotnet restore TerritoryCapture.sln --locked-mode --force -p:CustomAfterMicrosoftCommonTargets="$GITHUB_WORKSPACE/tests/build/newer-wasm-defaults.targets"
+          dotnet restore tests/TerritoryCapture.BrowserHarness --locked-mode --force -p:CustomAfterMicrosoftCommonTargets="$GITHUB_WORKSPACE/tests/build/newer-wasm-defaults.targets"
+
       - name: Build
         run: dotnet build TerritoryCapture.sln --configuration Release --no-restore
 
