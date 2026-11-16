@@ -7,7 +7,7 @@ shared interfaces, independent tests and integration gates.
 
 ## Start development
 
-Install the [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0), matching `global.json` (10.0.402, later patches in that feature band accepted). Run from the repository root:
+Install the [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0), matching `global.json` exactly (10.0.402). SDK roll-forward is disabled because newer SDK patches can change implicit Blazor/ILLink package references and invalidate locked restore. When upgrading the SDK, regenerate both the solution and BrowserHarness lockfiles and verify locked restore before committing the upgrade. Run from the repository root:
 
 ```sh
 dotnet restore --locked-mode

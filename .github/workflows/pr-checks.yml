@@ -21,6 +21,9 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Show selected .NET SDK
+        run: dotnet --info
+
       - name: Restore dependencies
         run: dotnet restore TerritoryCapture.sln --locked-mode
 
