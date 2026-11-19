@@ -68,10 +68,12 @@ public sealed partial class GameRules
 
         // Player metadata
         var playerIds = new HashSet<int>();
+        var playerById = new Dictionary<int, PlayerState>();
 
         for (var i = 0; i < state.Players.Length; i++)
         {
             var player = state.Players[i];
+            playerById.TryAdd(player.Id, player);
 
             if (player.Id != i)
                 AddProblem($"Player at index {i} must have ID {i}.");
@@ -118,6 +120,127 @@ public sealed partial class GameRules
 
             if (!Enum.IsDefined(cell.Color) || !Palette.Contains(cell.Color))
                 AddProblem($"Cell {cell.Id} has an invalid color.");
+
+            if (cell.OwnerId is null)
+                continue;
+
+            if (!playerById.TryGetValue(cell.OwnerId.Value, out var owner))
+            {
+                AddProblem($"Cell {cell.Id} references unknown player {cell.OwnerId.Value}.");
+                continue;
+            }
+
+            if (cell.Color != owner.Color)
+            {
+                AddProblem($"Cell {cell.Id} color does not match its owner's color.");
+            }
+        }
+
+        // Starting cell ownership
+        foreach (var player in state.Players)
+        {
+            if (player.StartCellId < 0 ||
+                player.StartCellId >= state.Cells.Length)
+            {
+                continue;
+            }
+
+            if (state.Cells[player.StartCellId].OwnerId != player.Id)
+            {
+                AddProblem($"Player {player.Id} does not own their starting cell.");
+            }
+        }
+
+
+        // Territory connectivity
+        foreach (var player in state.Players)
+        {
+            if (player.StartCellId < 0 ||
+                player.StartCellId >= state.Cells.Length)
+            {
+                continue;
+            }
+
+            var visited = new bool[state.Cells.Length];
+            var queue = new Queue<int>();
+
+            queue.Enqueue(player.StartCellId);
+            visited[player.StartCellId] = true;
+
+            while (queue.Count > 0)
+            {
+                var currentId = queue.Dequeue();
+
+                foreach (var neighborId in GetNeighbors(
+                    currentId,
+                    state.Width,
+                    state.Height))
+                {
+                    if (visited[neighborId])
+                        continue;
+
+                    visited[neighborId] = true;
+
+                    if (state.Cells[neighborId].OwnerId != player.Id)
+                        continue;
+
+                    queue.Enqueue(neighborId);
+                }
+            }
+
+            for (var i = 0; i < state.Cells.Length; i++)
+            {
+                if (state.Cells[i].OwnerId == player.Id && !visited[i])
+                {
+                    AddProblem(
+                        $"Player {player.Id} has disconnected territory.");
+                    break;
+                }
+            }
+        }
+
+        // Capture closure
+        foreach (var player in state.Players)
+        {
+            var reportedNeutralCells = new HashSet<int>();
+
+            for (var i = 0; i < state.Cells.Length; i++)
+            {
+                if (state.Cells[i].OwnerId != player.Id)
+                    continue;
+
+                foreach (var neighborId in GetNeighbors(
+                    i,
+                    state.Width,
+                    state.Height))
+                {
+                    var neighbor = state.Cells[neighborId];
+
+                    if (neighbor.OwnerId is null &&
+                        neighbor.Color == player.Color &&
+                        reportedNeutralCells.Add(neighborId))
+                    {
+                        AddProblem(
+                            $"Neutral cell {neighborId} should already be captured by player {player.Id}.");
+                    }
+                }
+            }
+        }
+
+        // Phase consistency
+        var neutralCount = state.Cells.Count(
+            cell => cell.OwnerId is null);
+
+        if (state.Phase == GamePhase.Running && neutralCount == 0)
+        {
+            AddProblem(
+                "Running game cannot have zero neutral cells.");
+        }
+
+        if (state.Phase == GamePhase.Finished && neutralCount > 0)
+        {
+            AddProblem(
+                "Finished game cannot have neutral cells.");
         }
 
         return Result();
