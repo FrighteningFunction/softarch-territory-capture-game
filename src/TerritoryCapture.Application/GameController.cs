@@ -50,7 +50,7 @@ public sealed class GameController : IGameController, IDisposable
         var isHumanTurn = state.Phase == GamePhase.Running &&
             state.Players[state.CurrentPlayerIndex].Kind == PlayerKind.Human;
         var canSave = !isBusy && isHumanTurn && screen == Screen.Game;
-        var legalColors = (isBusy && isHumanTurn && screen == Screen.Game) 
+        var legalColors = (!isBusy && isHumanTurn && screen == Screen.Game)
             ? _gameRules.LegalColors(state) :  ImmutableArray<GameColor>.Empty;
         var summary = _gameRules.Summarize(state);
         var players = state.Players.Select((p, i) =>
@@ -193,7 +193,7 @@ public sealed class GameController : IGameController, IDisposable
             while (!cancelToken.IsCancellationRequested)
             {
                 var state = _gameView.State;
-                if (state == null || state.Phase != GamePhase.Running || _gameView.Token.SessionId == sessionId) break;
+                if (state == null || state.Phase != GamePhase.Running || _gameView.Token.SessionId != sessionId) break;
                 if (state.Players[state.CurrentPlayerIndex].Kind != PlayerKind.Computer) break;
                 await Task.Delay(1, cancelToken);
                 var color = _computerStrategy.ChooseColor(state, _gameRules);
