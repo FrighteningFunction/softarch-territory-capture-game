@@ -182,7 +182,7 @@ public sealed class GameController : IGameController, IDisposable
     {
         var state = _gameView.State;
         if (state == null || state.Phase != GamePhase.Running) return;
-        if(state.Players[state.CurrentPlayerIndex].Kind != PlayerKind.Computer)
+        if(state.Players[state.CurrentPlayerIndex].Kind == PlayerKind.Computer)
             _ = RunComputerLoopAsync(sessionId, _runnerCTS!.Token);
     }
 
@@ -193,7 +193,7 @@ public sealed class GameController : IGameController, IDisposable
             while (!cancelToken.IsCancellationRequested)
             {
                 var state = _gameView.State;
-                if (state == null || state.Phase != GamePhase.Running || _gameView.Token.SessionId == sessionId) break;
+                if (state == null || state.Phase != GamePhase.Running || _gameView.Token.SessionId != sessionId) break;
                 if (state.Players[state.CurrentPlayerIndex].Kind != PlayerKind.Computer) break;
                 await Task.Delay(1, cancelToken);
                 var color = _computerStrategy.ChooseColor(state, _gameRules);
