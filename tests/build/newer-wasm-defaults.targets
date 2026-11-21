@@ -1,0 +1,12 @@
+<Project>
+  <!-- Regression fixture: reproduce hosted-runner pack-default drift without
+       installing another SDK or modifying any installed SDK files.
+       Import only for the dedicated locked-restore checks, not normal builds. -->
+  <Target Name="SimulateNewerWasmPackDefaults" BeforeTargets="ProcessFrameworkReferences" Condition="'$(UsingMicrosoftNETSdkBlazorWebAssembly)' == 'true'">
+    <ItemGroup>
+      <KnownWebAssemblySdkPack Update="Microsoft.NET.Sdk.WebAssembly.Pack" WebAssemblySdkPackVersion="10.0.15" />
+      <KnownILLinkPack Update="Microsoft.NET.ILLink.Tasks" ILLinkPackVersion="10.0.15" />
+      <KnownAspNetCorePack Update="Microsoft.AspNetCore.App.Internal.Assets" AspNetCorePackVersion="10.0.15" />
+    </ItemGroup>
+  </Target>
+</Project>

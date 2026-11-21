@@ -1,0 +1,10 @@
+{
+  "name": "territory-capture-browser-checks",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test --project=infrastructure",
+    "test:app": "playwright test --project=application"
+  },
+  "devDependencies": { "@playwright/test": "1.56.1" }
+}

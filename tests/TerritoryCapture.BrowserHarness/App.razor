@@ -1,0 +1,49 @@
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@using System.Collections.Immutable
+@using TerritoryCapture.Contracts
+@using TerritoryCapture.Infrastructure
+@using TerritoryCapture.TestSupport
+@inject IGameSaveStore Store
+@inject GameSnapshotJsonCodec Codec
+@inject IComputerStrategy Strategy
+
+<h1>D infrastructure test harness</h1>
+<p>Test-only fixture transitions and rules double; not the game or its controller.</p>
+<button @onclick="Move">Fixture move</button>
+<button @onclick="Evaluate">Evaluate AI</button>
+<button @onclick="Save">Save</button>
+<button @onclick="Load">Load</button>
+<output data-testid="status">@status</output>
+<pre data-testid="snapshot">@Codec.Encode(new(1, state))</pre>
+
+@code {
+    private GameState state = GameFixtures.MultiHop();
+    private string status = "Ready";
+    private void Move()
+    {
+        // Hand-written expected successor for the shared four-cell capture fixture.
+        // This is not a replacement flood-fill implementation.
+        state = state with
+        {
+            Cells = state.Cells.Select(cell => cell.Id is 0 or 1 or 2 or 13 or 14
+                ? cell with { OwnerId = 0, Color = GameColor.Orange } : cell).ToImmutableArray(),
+            Players = state.Players.SetItem(0, state.Players[0] with { Color = GameColor.Orange }),
+            CurrentPlayerIndex = 1, TurnNumber = 1
+        };
+        status = "Moved";
+    }
+    private void Evaluate()
+    {
+        var computer = GameFixtures.ComputerTurn();
+        var rules = new ScriptedRules { Move = new(computer with { TurnNumber = 1 }, 4, RuleError.None) };
+        status = $"AI:{Strategy.ChooseColor(computer, rules)}";
+    }
+    private async Task Save() => status = (await Store.SaveAsync(new(1, state), default)).Error.ToString();
+    private async Task Load()
+    {
+        var result = await Store.LoadAsync(default);
+        if (result.Snapshot is not null) state = result.Snapshot.State;
+        status = result.Error.ToString();
+    }
+}
