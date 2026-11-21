@@ -182,7 +182,7 @@ public sealed class GameController : IGameController, IDisposable
     {
         var state = _gameView.State;
         if (state == null || state.Phase != GamePhase.Running) return;
-        if(state.Players[state.CurrentPlayerIndex].Kind != PlayerKind.Computer)
+        if (state.Players[state.CurrentPlayerIndex].Kind == PlayerKind.Computer)
             _ = RunComputerLoopAsync(sessionId, _runnerCTS!.Token);
     }
 

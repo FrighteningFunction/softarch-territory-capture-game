@@ -11,6 +11,10 @@
     else
     {
         <h2>@ScreenTitle(controller.View)</h2>
+        @if (!string.IsNullOrEmpty(statusMessage))
+        {
+            <p class="notice" role="status">@statusMessage</p>
+        }
         @if (controller.View.BackgroundError != CommandError.None)
         {
             <p class="notice" role="alert">@ErrorText(controller.View.BackgroundError)</p>
@@ -87,6 +91,7 @@
 
 @code {
     private IGameController? controller;
+    private string? statusMessage;
     private int participantCount = 2;
     private readonly PlayerKind[] participantKinds = [PlayerKind.Human, PlayerKind.Human, PlayerKind.Computer, PlayerKind.Computer];
 
@@ -97,16 +102,29 @@
     }
 
     private void OnChanged() => _ = InvokeAsync(StateHasChanged);
-    private async Task StartGame() =>
-        await controller!.StartAsync(new NewGameOptions(participantKinds.Take(participantCount).ToImmutableArray()));
+    private async Task StartGame()
+    {
+        statusMessage = null;
+        var result = await controller!.StartAsync(new NewGameOptions(participantKinds.Take(participantCount).ToImmutableArray()));
+        statusMessage = result.Error == CommandError.None ? null : ErrorText(result.Error);
+    }
     private async Task ChooseColor(GameColor color) =>
         await controller!.ChooseColorAsync(controller.View.Token, color);
-    private async Task SaveGame() =>
-        await controller!.SaveAsync(controller.View.Token);
-    private async Task ResumeGame() =>
-        await controller!.ResumeAsync();
-    private async Task ReturnToSetup() =>
+    private async Task SaveGame()
+    {
+        var result = await controller!.SaveAsync(controller.View.Token);
+        statusMessage = result.Error == CommandError.None ? "The game was saved successfully." : ErrorText(result.Error);
+    }
+    private async Task ResumeGame()
+    {
+        var result = await controller!.ResumeAsync();
+        statusMessage = result.Error == CommandError.None ? null : ErrorText(result.Error);
+    }
+    private async Task ReturnToSetup()
+    {
+        statusMessage = null;
         await controller!.ReturnToSetupAsync();
+    }
 
     private void ParticipantCountChanged(ChangeEventArgs args) =>
         participantCount = int.Parse(args.Value?.ToString() ?? "2");
