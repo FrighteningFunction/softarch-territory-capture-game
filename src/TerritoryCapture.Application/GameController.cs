@@ -50,7 +50,7 @@ public sealed class GameController : IGameController, IDisposable
         var isHumanTurn = state.Phase == GamePhase.Running &&
             state.Players[state.CurrentPlayerIndex].Kind == PlayerKind.Human;
         var canSave = !isBusy && isHumanTurn && screen == Screen.Game;
-        var legalColors = (!isBusy && isHumanTurn && screen == Screen.Game)
+        var legalColors = (isBusy && isHumanTurn && screen == Screen.Game) 
             ? _gameRules.LegalColors(state) :  ImmutableArray<GameColor>.Empty;
         var summary = _gameRules.Summarize(state);
         var players = state.Players.Select((p, i) =>
@@ -182,7 +182,7 @@ public sealed class GameController : IGameController, IDisposable
     {
         var state = _gameView.State;
         if (state == null || state.Phase != GamePhase.Running) return;
-        if (state.Players[state.CurrentPlayerIndex].Kind == PlayerKind.Computer)
+        if(state.Players[state.CurrentPlayerIndex].Kind == PlayerKind.Computer)
             _ = RunComputerLoopAsync(sessionId, _runnerCTS!.Token);
     }
 
