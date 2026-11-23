@@ -295,6 +295,57 @@ public class GameRulesValidationTests
             problem => problem.Contains("Finished game cannot have neutral cells"));
     }
 
+    [Fact]
+    public void Validate_RejectsDefaultCollections()
+    {
+        var state = CreateValidState() with
+        {
+            Cells = default,
+            Players = default
+        };
+
+        var result = _rules.Validate(state);
+
+        Assert.False(result.IsValid);
+        Assert.NotEmpty(result.Problems);
+    }
+
+    [Fact]
+    public void Validate_RejectsNullPlayerEntry()
+    {
+        var state = CreateValidState();
+        var players = state.Players.ToBuilder();
+
+        players[1] = null!;
+
+        var result = _rules.Validate(state with
+        {
+            Players = players.ToImmutable()
+        });
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Problems,
+            problem => problem.Contains("Player entry cannot be null"));
+    }
+
+    [Fact]
+    public void Validate_RejectsNullCellEntry()
+    {
+        var state = CreateValidState();
+        var cells = state.Cells.ToBuilder();
+
+        cells[50] = null!;
+
+        var result = _rules.Validate(state with
+        {
+            Cells = cells.ToImmutable()
+        });
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Problems,
+            problem => problem.Contains("Cell entry cannot be null"));
+    }
+
     private static GameState CreateValidState()
     {
         return new GameState(

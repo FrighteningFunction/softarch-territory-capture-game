@@ -9,10 +9,15 @@ public sealed partial class GameRules
     public ImmutableArray<GameColor> LegalColors(GameState state)
     {
         if (state is null ||
-            state.Phase != GamePhase.Running ||
-            state.Players.IsDefaultOrEmpty ||
-            state.CurrentPlayerIndex < 0 ||
-            state.CurrentPlayerIndex >= state.Players.Length)
+        state.Phase != GamePhase.Running ||
+        !Enum.IsDefined(state.Phase) ||
+        state.Players.IsDefaultOrEmpty ||
+        state.CurrentPlayerIndex < 0 ||
+        state.CurrentPlayerIndex >= state.Players.Length ||
+        state.Players.Any(player => player is null) ||
+        state.Players.Any(player =>
+            !Enum.IsDefined(player.Color) ||
+            !Palette.Contains(player.Color)))
         {
             return [];
         }
@@ -22,21 +27,13 @@ public sealed partial class GameRules
             .ToImmutableArray();
     }
 
-    public MoveResult ApplyMove(
-        GameState state,
-        int playerId,
-        GameColor color)
+   public MoveResult ApplyMove(
+    GameState state,
+    int playerId,
+    GameColor color)
     {
-        if (state is null ||
-            state.Cells.IsDefault ||
-            state.Players.IsDefaultOrEmpty ||
-            state.Width <= 0 ||
-            state.Height <= 0 ||
-            (long)state.Width * state.Height != state.Cells.Length ||
-            state.CurrentPlayerIndex < 0 ||
-            state.CurrentPlayerIndex >= state.Players.Length ||
-            state.TurnNumber < 0 ||
-            state.TurnNumber == long.MaxValue)
+        // Validate the complete game state before applying a move.
+        if (!Validate(state).IsValid)
         {
             return new MoveResult(null, 0, RuleError.InvalidState);
         }
@@ -44,6 +41,12 @@ public sealed partial class GameRules
         if (state.Phase == GamePhase.Finished)
         {
             return new MoveResult(null, 0, RuleError.FinishedGame);
+        }
+
+        // Prevent TurnNumber overflow.
+        if (state.TurnNumber == long.MaxValue)
+        {
+            return new MoveResult(null, 0, RuleError.InvalidState);
         }
 
         var playerIndex = -1;

@@ -146,8 +146,10 @@ public sealed partial class GameRules
         int width,
         int height)
     {
-        if (width <= 0 || height <= 0 ||
-            cellId < 0 || cellId >= width * height)
+        if (width <= 0 ||
+            height <= 0 ||
+            cellId < 0 ||
+            cellId >= (long)width * height)
         {
             return [];
         }
