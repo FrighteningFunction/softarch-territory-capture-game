@@ -26,18 +26,18 @@ The contracts match the work plan; all four implementations use these types.
 
 | Owner | Start here | First implementation task |
 | --- | --- | --- |
-| A | `src/TerritoryCapture.Rules` and its tests | Implement `IGameRules.Create`, hex adjacency and `ApplyMove` using the shared fixtures. |
-| B | `src/TerritoryCapture.Application` and its tests | Implement `IGameController` start, human move and reset using test doubles. |
+| A | `src/TerritoryCapture.Rules` and its tests | Extend and validate `IGameRules` generation, hex adjacency and capture behavior. |
+| B | `src/TerritoryCapture.Application` and its tests | Extend controller tests and integrate its real rules/strategy dependencies. |
 | C | `src/TerritoryCapture.Web` and its tests | Replace the preview with setup/game components against `IGameController`; register real services as they arrive. |
 | D | `src/TerritoryCapture.Infrastructure` and its tests | Strategy, codec, browser storage and independent tests implemented. See the component README for `AddTerritoryCaptureInfrastructure` registration and the browser-test handoff. |
 
-Each person adds their implementation and tests in their own projects, runs tests locally, and opens a PR describing what works and what tests passed. For a single component, for example:
+Each person extends their implementation and tests in their own projects, runs tests locally, and opens a PR describing what works and what tests passed. For a single component, for example:
 
 ```sh
 dotnet test tests/TerritoryCapture.Rules.Tests
 ```
 
-[Shared test support](tests/TerritoryCapture.TestSupport/README.md) provides hand-built states, expected outcomes, JSON and configurable dependency doubles. Rules and Application remain empty implementation projects; their tests verify starter assets. [Infrastructure](src/TerritoryCapture.Infrastructure/README.md) implements greedy selection and the version-1 JSON codec, tested independently against the shared fixtures and rules doubles. Preview tests verify the fake UI wiring. The real browser save adapter is covered by isolated unit tests and [published browser-harness checks](tests/browser/README.md). Three application smoke tests are prepared for integration after A/B/C deliver their components; they have not passed against the starter UI. [PR checks](.github/workflows/pr-checks.yml) restore the pinned dependencies, build the solution and run all test projects in Release mode on each pull request.
+[Shared test support](tests/TerritoryCapture.TestSupport/README.md) provides hand-built states, expected outcomes, JSON and configurable dependency doubles. Rules, Application and Infrastructure have implementation tests. [Infrastructure](src/TerritoryCapture.Infrastructure/README.md) implements greedy selection, the version-1 JSON codec and browser storage. Preview tests verify the fake UI until C replaces it with the real game components. [PR checks](.github/workflows/pr-checks.yml) restore the pinned dependencies, build the solution and run all test projects in Release mode on each pull request.
 
 For final build checks:
 

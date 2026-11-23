@@ -1,64 +1,169 @@
 @implements IDisposable
 @inject IEnumerable<IGameController> Controllers
 
-<PageTitle>Territory Capture — starter</PageTitle>
+<PageTitle>Territory Capture</PageTitle>
 <main>
     <h1>Territory Capture</h1>
     @if (controller is null)
     {
-        <p>Project skeleton. Gameplay is awaiting implementation.</p>
-        <p>Run the Debug build to open the development preview.</p>
+        <p class="notice" role="alert">No game controller is registered.</p>
     }
     else
     {
-        <p class="notice">Development preview — predefined screens, not playable game logic.</p>
-        <nav aria-label="Preview screens">
-            <button @onclick="() => controller.ReturnToSetupAsync()">Setup</button>
-            <button @onclick="() => controller.StartAsync(new NewGameOptions([PlayerKind.Human, PlayerKind.Human]))">Human turn</button>
-            <button @onclick="() => controller.StartAsync(new NewGameOptions([PlayerKind.Computer, PlayerKind.Human]))">Computer turn</button>
-            <button @onclick="() => controller.ResumeAsync()">Draw result</button>
-        </nav>
-        <h2>@controller.View.Screen</h2>
-        @if (controller.View.State is { } state)
+        <h2>@ScreenTitle(controller.View)</h2>
+        @if (!string.IsNullOrEmpty(statusMessage))
         {
-            <p>Current player: @(state.CurrentPlayerIndex + 1) · Neutral cells: @controller.View.NeutralCount</p>
-            <svg viewBox="0 0 480 340" role="img" aria-label="Hex board preview">
+            <p class="notice" role="status">@statusMessage</p>
+        }
+        @if (controller.View.BackgroundError != CommandError.None)
+        {
+            <p class="notice" role="alert">@ErrorText(controller.View.BackgroundError)</p>
+        }
+
+        @if (controller.View.Screen == Screen.Setup)
+        {
+            <section aria-label="Participant setup">
+                <label>Participant count
+                    <select value="@participantCount" @onchange="ParticipantCountChanged">
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                    </select>
+                </label>
+                @for (var i = 0; i < participantCount; i++)
+                {
+                    var index = i;
+                    <label>Player @(index + 1)
+                        <select value="@participantKinds[index]" @onchange="args => SetParticipantKind(index, args)">
+                            <option value="@PlayerKind.Human">Human</option>
+                            <option value="@PlayerKind.Computer">Computer</option>
+                        </select>
+                    </label>
+                }
+                <div class="actions">
+                    <button disabled="@controller.View.IsBusy" @onclick="StartGame">Start</button>
+                    <button disabled="@controller.View.IsBusy" @onclick="ResumeGame">Continue saved game</button>
+                </div>
+            </section>
+        }
+        else if (controller.View.State is { } state)
+        {
+            @if (state.Phase == GamePhase.Running)
+            {
+                <p>Current player: @(state.CurrentPlayerIndex + 1) · Neutral cells: @controller.View.NeutralCount</p>
+            }
+            <svg viewBox="0 0 480 340" role="img" aria-label="Hex board">
                 @foreach (var cell in state.Cells)
                 {
-                    <polygon points="@Points(cell.Id)" fill="@cell.Color.ToString().ToLowerInvariant()" stroke="#333" stroke-width="1">
+                    <polygon points="@Points(cell.Id)" fill="@ColorCss(cell.Color)"
+                             stroke="#333" stroke-width="1">
                         <title>Cell @cell.Id, owner @(cell.OwnerId?.ToString() ?? "neutral")</title>
                     </polygon>
                 }
             </svg>
-            @foreach (var player in controller.View.Players)
+            <section class="scores" aria-label="Scores">
+                @foreach (var player in controller.View.Players)
+                {
+                    <p>Player @(player.Id + 1): @player.Kind · <span style="color:@ColorCss(player.Color)">●</span> @player.Color · @player.Score cells</p>
+                }
+            </section>
+
+            @if (controller.View.Screen == Screen.Game)
             {
-                <p>Player @(player.Id + 1): @player.Kind · @player.Color · @player.Score cells</p>
+                <section aria-label="Available colors">
+                    @foreach (var color in controller.View.LegalColors)
+                    {
+                        <button class="color-button" style="background:@ColorCss(color)"
+                                disabled="@controller.View.IsBusy"
+                                @onclick="() => ChooseColor(color)">@color</button>
+                    }
+                    <button disabled="@(!controller.View.CanSave || controller.View.IsBusy)" @onclick="SaveGame">Save</button>
+                </section>
             }
-            <p>Legal colors: @string.Join(", ", controller.View.LegalColors)</p>
-            @if (controller.View.Screen == Screen.Result)
+            else
             {
-                <p>Draw: players @string.Join(", ", controller.View.WinnerIds.Select(id => id + 1))</p>
+                <p class="result">@(controller.View.WinnerIds.Length == 1 ? $"Winner: player {controller.View.WinnerIds[0] + 1}" : $"Draw: players {string.Join(", ", controller.View.WinnerIds.Select(id => id + 1))}")</p>
             }
-        }
-        else
-        {
-            <p>C: replace this preview with participant setup and game components.</p>
+            <button @onclick="ReturnToSetup">New game / Setup</button>
         }
     }
 </main>
 
 @code {
     private IGameController? controller;
+    private string? statusMessage;
+    private int participantCount = 2;
+    private readonly PlayerKind[] participantKinds = [PlayerKind.Human, PlayerKind.Human, PlayerKind.Computer, PlayerKind.Computer];
+
     protected override void OnInitialized()
     {
         controller = Controllers.SingleOrDefault();
         if (controller is not null) controller.Changed += OnChanged;
     }
+
     private void OnChanged() => _ = InvokeAsync(StateHasChanged);
+    private async Task StartGame()
+    {
+        statusMessage = null;
+        var result = await controller!.StartAsync(new NewGameOptions(participantKinds.Take(participantCount).ToImmutableArray()));
+        statusMessage = result.Error == CommandError.None ? null : ErrorText(result.Error);
+    }
+    private async Task ChooseColor(GameColor color) =>
+        await controller!.ChooseColorAsync(controller.View.Token, color);
+    private async Task SaveGame()
+    {
+        var result = await controller!.SaveAsync(controller.View.Token);
+        statusMessage = result.Error == CommandError.None ? "The game was saved successfully." : ErrorText(result.Error);
+    }
+    private async Task ResumeGame()
+    {
+        var result = await controller!.ResumeAsync();
+        statusMessage = result.Error == CommandError.None ? null : ErrorText(result.Error);
+    }
+    private async Task ReturnToSetup()
+    {
+        statusMessage = null;
+        await controller!.ReturnToSetupAsync();
+    }
+
+    private void ParticipantCountChanged(ChangeEventArgs args) =>
+        participantCount = int.Parse(args.Value?.ToString() ?? "2");
+    private void SetParticipantKind(int index, ChangeEventArgs args) =>
+        participantKinds[index] = Enum.Parse<PlayerKind>(args.Value?.ToString() ?? "Human");
+
     public void Dispose()
     {
         if (controller is not null) controller.Changed -= OnChanged;
     }
+
+    private static string ScreenTitle(GameView view) => view.Screen switch
+    {
+        Screen.Setup => "Participant setup",
+        Screen.Game => "Game",
+        Screen.Result => "Result",
+        _ => "Territory Capture"
+    };
+    private static string ErrorText(CommandError error) => error switch
+    {
+        CommandError.MissingSave => "No saved game was found.",
+        CommandError.InvalidSave => "The saved game is invalid.",
+        CommandError.UnsupportedSaveVersion => "This saved game version is not supported.",
+        CommandError.StorageUnavailable => "Local storage is unavailable.",
+        CommandError.IllegalColor => "That color is not allowed.",
+        CommandError.StaleView => "The view changed; refresh it and try again.",
+        CommandError.Busy => "An operation is still running.",
+        _ => "The operation could not be completed."
+    };
+    private static string ColorCss(GameColor color) => color switch
+    {
+        GameColor.Red => "#d62728",
+        GameColor.Orange => "#ff7f0e",
+        GameColor.Yellow => "#f3d125",
+        GameColor.Green => "#2ca02c",
+        GameColor.Blue => "#1f77b4",
+        GameColor.Purple => "#9467bd",
+        _ => "#777"
+    };
     private static string Points(int id)
     {
         const double radius = 20;
