@@ -58,28 +58,6 @@ public class GameRulesGenerationTests
         });
     }
 
-    [Fact]
-    public void CreateIsDeterministicForSameSeed()
-    {
-        var options = new NewGameOptions(
-        [
-            PlayerKind.Human,
-            PlayerKind.Human
-        ]);
-
-        var first = _rules.Create(options, 1234).State!;
-        var second = _rules.Create(options, 1234).State!;
-
-        Assert.Equal(first.Width, second.Width);
-        Assert.Equal(first.Height, second.Height);
-        Assert.Equal(first.CurrentPlayerIndex, second.CurrentPlayerIndex);
-        Assert.Equal(first.TurnNumber, second.TurnNumber);
-        Assert.Equal(first.Phase, second.Phase);
-
-        Assert.True(first.Cells.SequenceEqual(second.Cells));
-        Assert.True(first.Players.SequenceEqual(second.Players));
-    }
-
     [Theory]
     [InlineData(1)]
     [InlineData(5)]
@@ -108,5 +86,78 @@ public class GameRulesGenerationTests
 
         Assert.Null(result.State);
         Assert.Equal(RuleError.InvalidOptions, result.Error);
+    }
+
+    [Theory]
+    [InlineData(PlayerKind.Human, PlayerKind.Human)]
+    [InlineData(PlayerKind.Human, PlayerKind.Computer)]
+    [InlineData(PlayerKind.Computer, PlayerKind.Human)]
+    [InlineData(PlayerKind.Human, PlayerKind.Human, PlayerKind.Human)]
+    [InlineData(PlayerKind.Human, PlayerKind.Human, PlayerKind.Human, PlayerKind.Human)]
+    public void Create_GeneratesValidStateForPlayerConfigurations(
+        params PlayerKind[] playerKinds)
+    {
+        var result = _rules.Create(
+            new NewGameOptions(playerKinds.ToImmutableArray()),
+            seed: 42);
+
+        Assert.Equal(RuleError.None, result.Error);
+        Assert.NotNull(result.State);
+
+        var validation = _rules.Validate(result.State!);
+
+        Assert.True(
+            validation.IsValid,
+            string.Join(Environment.NewLine, validation.Problems));
+    }
+
+   [Fact]
+    public void Create_GeneratesSameStateForSameSeed()
+    {
+        var options = new NewGameOptions(
+            ImmutableArray.Create(
+                PlayerKind.Human,
+                PlayerKind.Computer));
+
+        var first = _rules.Create(options, seed: 42);
+        var second = _rules.Create(options, seed: 42);
+
+        Assert.Equal(RuleError.None, first.Error);
+        Assert.Equal(RuleError.None, second.Error);
+
+        Assert.NotNull(first.State);
+        Assert.NotNull(second.State);
+
+        Assert.Equal(first.State.Width, second.State.Width);
+        Assert.Equal(first.State.Height, second.State.Height);
+        Assert.Equal(first.State.CurrentPlayerIndex, second.State.CurrentPlayerIndex);
+        Assert.Equal(first.State.TurnNumber, second.State.TurnNumber);
+        Assert.Equal(first.State.Phase, second.State.Phase);
+
+        Assert.Equal(
+            first.State.Players.ToArray(),
+            second.State.Players.ToArray());
+
+        Assert.Equal(
+            first.State.Cells.ToArray(),
+            second.State.Cells.ToArray());
+    }
+
+    [Fact]
+    public void Create_GeneratesDifferentStatesForDifferentSeeds()
+    {
+        var options = new NewGameOptions(
+            ImmutableArray.Create(
+                PlayerKind.Human,
+                PlayerKind.Computer));
+
+        var first = _rules.Create(options, seed: 42);
+        var second = _rules.Create(options, seed: 123);
+
+        Assert.Equal(RuleError.None, first.Error);
+        Assert.Equal(RuleError.None, second.Error);
+        Assert.False(
+        first.State!.Cells.SequenceEqual(second.State!.Cells) &&
+        first.State.Players.SequenceEqual(second.State.Players));
     }
 }
