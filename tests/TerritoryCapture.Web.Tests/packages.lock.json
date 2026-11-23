@@ -423,6 +423,8 @@
       "territorycapture.infrastructure": {
         "type": "Project",
         "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.0, )",
+          "Microsoft.JSInterop": "[10.0.0, )",
           "TerritoryCapture.Contracts": "[1.0.0, )"
         }
       },
