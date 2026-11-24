@@ -15,7 +15,7 @@ public class PreviewTests
     {
         using var context = new BunitContext();
         var app = context.Render<App>();
-        Assert.Contains("Gameplay is awaiting implementation", app.Markup);
+        Assert.Contains("No game controller is registered", app.Markup);
         Assert.Empty(app.FindAll("polygon"));
     }
 #if !DEBUG
@@ -32,12 +32,13 @@ public class PreviewTests
         using var context = new BunitContext();
         context.Services.AddScoped<IGameController, DemoController>();
         var app = context.Render<App>();
-        app.FindAll("button")[1].Click();
+        app.FindAll("button").Single(button => button.TextContent.Trim() == "Start").Click();
         Assert.Equal(120, app.FindAll("polygon").Count);
         Assert.Contains("Neutral cells: 118", app.Markup);
-        app.FindAll("button")[3].Click();
+        app.FindAll("button").Single(button => button.TextContent.Trim() == "New game / Setup").Click();
+        app.FindAll("button").Single(button => button.TextContent.Trim() == "Continue saved game").Click();
         Assert.Contains("Draw: players 1, 2", app.Markup);
-        Assert.Contains("Neutral cells: 0", app.Markup);
+        Assert.Equal(120, app.FindAll("polygon").Count);
         app.FindAll("button")[0].Click();
         Assert.Empty(app.FindAll("polygon"));
     }

@@ -4,3 +4,8 @@ main { max-width: 960px; margin: 2rem auto; padding: 0 1rem; }
 nav { display: flex; flex-wrap: wrap; gap: .5rem; }
 button { font: inherit; padding: .5rem 1rem; cursor: pointer; }
 svg { display: block; width: min(100%, 640px); }
+.actions, section { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; margin: 1rem 0; }
+label { display: flex; flex-direction: column; gap: .25rem; }
+.color-button { min-width: 72px; color: white; text-shadow: 0 1px 2px #000; }
+.scores { display: block; }
+.result { font-size: 1.25rem; font-weight: bold; }

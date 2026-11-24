@@ -36,7 +36,6 @@ public sealed class GreedyComputerStrategy : IComputerStrategy
                 bestGain = result.CapturedCount;
             }
         }
-
         return bestColor!.Value;
     }
 }
