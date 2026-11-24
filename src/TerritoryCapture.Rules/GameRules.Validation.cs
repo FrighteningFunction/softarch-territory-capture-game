@@ -41,12 +41,25 @@ public sealed partial class GameRules
             return Result();
         }
 
+        // Null cell entries
+        if (state.Cells.Any(cell => cell is null))
+        {
+            AddProblem("Cell entry cannot be null.");
+            return Result();
+        }
+
         // Player collection
         if (state.Players.IsDefault ||
             state.Players.Length < 2 ||
             state.Players.Length > 4)
         {
             AddProblem("Game must contain between 2 and 4 players.");
+            return Result();
+        }
+
+        if (state.Players.Any(player => player is null))
+        {
+            AddProblem("Player entry cannot be null.");
             return Result();
         }
 
@@ -156,7 +169,8 @@ public sealed partial class GameRules
         foreach (var player in state.Players)
         {
             if (player.StartCellId < 0 ||
-                player.StartCellId >= state.Cells.Length)
+                player.StartCellId >= state.Cells.Length ||
+                state.Cells[player.StartCellId].OwnerId != player.Id)
             {
                 continue;
             }
