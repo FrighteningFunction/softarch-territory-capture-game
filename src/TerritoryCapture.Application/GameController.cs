@@ -50,8 +50,7 @@ public sealed class GameController : IGameController, IDisposable
         var isHumanTurn = state.Phase == GamePhase.Running &&
             state.Players[state.CurrentPlayerIndex].Kind == PlayerKind.Human;
         var canSave = !isBusy && isHumanTurn && screen == Screen.Game;
-        var legalColors = (isBusy && isHumanTurn && screen == Screen.Game) 
-            ? _gameRules.LegalColors(state) :  ImmutableArray<GameColor>.Empty;
+        var legalColors = canSave ? _gameRules.LegalColors(state) :  ImmutableArray<GameColor>.Empty;
         var summary = _gameRules.Summarize(state);
         var players = state.Players.Select((p, i) =>
             new PlayerView(p.Id, p.Kind, p.Color, summary.Scores[i].Score)).ToImmutableArray();
@@ -115,6 +114,7 @@ public sealed class GameController : IGameController, IDisposable
             return ValueTask.FromResult(new CommandResult(CommandError.IllegalColor));
         var nextScreen = moveResult.State!.Phase == GamePhase.Finished ? Screen.Result : Screen.Game;
         PublishView(BuildGameView(expected.SessionId, expected.Revision + 1, nextScreen, moveResult.State, false, CommandError.None));
+        CheckAndStartComputerRunner(expected.SessionId);
         return ValueTask.FromResult(new CommandResult(CommandError.None));
     }
 
@@ -208,7 +208,7 @@ public sealed class GameController : IGameController, IDisposable
         catch (OperationCanceledException)
         {
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             if(_gameView.Token.SessionId == sessionId)
                 PublishView(BuildGameView(sessionId, _gameView.Token.Revision + 1, _gameView.Screen, _gameView.State!, false, CommandError.UnexpectedFailure));
