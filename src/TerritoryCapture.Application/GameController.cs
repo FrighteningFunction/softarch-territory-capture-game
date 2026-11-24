@@ -208,7 +208,7 @@ public sealed class GameController : IGameController, IDisposable
         catch (OperationCanceledException)
         {
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             if(_gameView.Token.SessionId == sessionId)
                 PublishView(BuildGameView(sessionId, _gameView.Token.Revision + 1, _gameView.Screen, _gameView.State!, false, CommandError.UnexpectedFailure));
