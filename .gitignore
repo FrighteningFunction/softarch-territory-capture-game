@@ -23,3 +23,9 @@ artifacts/
 **/playwright-report/
 **/test-results/
 *.user
+
+# other docs in the root
+*.pdf
+
+# Private architecture presentation preparation
+/docs/bemutato-felkeszules_notes.md
